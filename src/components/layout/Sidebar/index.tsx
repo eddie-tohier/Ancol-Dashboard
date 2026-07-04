@@ -68,7 +68,7 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
   return (
     <ClickOutside onClick={() => setSidebarOpen(false)}>
       <aside
-        className={`fixed left-0 top-0 z-9999 flex h-screen w-72.5 flex-col overflow-y-hidden bg-black duration-300 ease-linear lg:translate-x-0 ${
+        className={`fixed left-0 top-0 z-9999 flex h-screen w-72.5 flex-col overflow-y-hidden bg-[#0b1a33] duration-300 ease-linear lg:translate-x-0 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -90,7 +90,7 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
           </Link>
         </div>
 
-        <div className="flex flex-col overflow-y-auto duration-300 ease-linear">
+        <div className="flex flex-1 flex-col overflow-y-auto duration-300 ease-linear">
           <nav className="mt-2 px-4 py-4 lg:mt-2 lg:px-6">
             <div>
               <ul className="mb-4 flex flex-col gap-1.5">{renderMenu(mainMenu)}</ul>
@@ -101,6 +101,13 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
               <ul className="mb-4 flex flex-col gap-1.5">{renderMenu(otherMenu)}</ul>
             </div>
           </nav>
+        </div>
+
+        <img src="/ancol-sidebar.png" alt="Ancol" className="w-full h-auto" />
+        <div className="z-10 border-t border-gray-700 px-6 py-4 text-center text-gray-500">
+          <p className="font-semibold text-white">Ancol Connect</p>
+          <p className="text-sm">Management Dashboard</p>
+          <p className="text-xs text-gray-600">v1.0.0</p>
         </div>
       </aside>
     </ClickOutside>
