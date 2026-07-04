@@ -1,0 +1,92 @@
+"use client"
+
+import { useState, FormEvent, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { signIn, useSession } from "next-auth/react"
+import { AlertCircle } from "lucide-react"
+
+export default function LoginPage() {
+  const router = useRouter()
+  const { status } = useSession()
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [error, setError] = useState("")
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (status === "authenticated") {
+      router.push("/dashboard")
+    }
+  }, [status, router])
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault()
+    setError("")
+    setLoading(true)
+
+    const result = await signIn("credentials", {
+      email,
+      password,
+      redirect: false,
+    })
+
+    if (result?.error) {
+      setError("Email atau password salah")
+      setLoading(false)
+    } else {
+      router.push("/dashboard")
+    }
+  }
+
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-whiten px-4">
+      <div className="w-full max-w-md rounded-lg border border-stroke bg-white shadow-default">
+        <div className="border-b border-stroke px-5 py-3">
+          <h3 className="text-lg font-semibold text-black">REC-H Dashboard</h3>
+        </div>
+        <form onSubmit={handleSubmit} className="p-5">
+          {error && (
+            <div className="mb-3 flex items-center gap-2 rounded-md bg-danger/10 p-2.5 text-sm text-danger">
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
+          <div className="mb-3">
+            <label className="compact-label">Email</label>
+            <input
+              type="email"
+              placeholder="nama@email.com"
+              className="compact-input w-full"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
+          <div className="mb-3">
+            <label className="compact-label">Password</label>
+            <input
+              type="password"
+              placeholder="Masukkan password"
+              className="compact-input w-full"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full cursor-pointer rounded-md border border-primary bg-primary px-4 py-2 font-medium text-white transition hover:bg-opacity-90 disabled:opacity-60"
+          >
+            {loading ? "Memproses..." : "Masuk"}
+          </button>
+          <div className="mt-4 text-center">
+            <a href="/forgot-password" className="text-sm text-primary hover:underline">
+              Lupa Password?
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
