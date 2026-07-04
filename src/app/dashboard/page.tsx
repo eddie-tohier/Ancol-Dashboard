@@ -131,11 +131,11 @@ export default function DashboardPage() {
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm">
             <Wallet className="h-6 w-6 text-white" />
           </div>
-          <div className="text-white">
-            <p className="text-sm font-medium opacity-90">Total Revenue this month</p>
+          <div className="text-white flex-1 min-w-0">
+            <p className="text-sm font-medium opacity-90 truncate">Total Revenue this month</p>
             <div className="flex items-center gap-2">
-              <p className="text-2xl font-bold">{new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(totalRevenue)}</p>
-              <span className="flex items-center gap-1 text-xs font-semibold bg-white/20 backdrop-blur-sm px-2 py-0.5 rounded-full">
+              <p className="text-2xl font-bold whitespace-nowrap">{new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(totalRevenue)}</p>
+              <span className="flex items-center gap-1 text-xs font-semibold bg-white/20 backdrop-blur-sm px-2 py-0.5 rounded-full whitespace-nowrap">
                 <TrendingUp className="h-3 w-3" />
                 +12.5%
               </span>
@@ -164,36 +164,49 @@ export default function DashboardPage() {
         </CardDataStats>
       </div>
 
-      <div className="mt-6">
+      <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-2">
         <div className="rounded-lg border border-stroke bg-white px-5 pb-5 pt-7.5 shadow-default sm:px-7.5">
           <div className="flex items-center justify-between mb-5">
             <h3 className="text-lg font-semibold text-black">Match Rate per Wahana (30 Hari)</h3>
             <Link href="/orders" className="text-sm font-medium text-primary">Lihat semua</Link>
           </div>
-          <div className="flex items-center gap-8">
-            <div className="w-1/3 h-64">
+          <div className="grid grid-cols-2 gap-4 items-center">
+            <div className="h-64">
               <ReactApexChart options={donutChartOptions} series={UNITS.map((u) => unitRates[u.id])} type="donut" height="100%" />
             </div>
-            <div className="w-2/3 space-y-4">
+            <div className="space-y-4">
               {UNITS.map((u, i) => (
-                <div key={u.id} className="flex items-center gap-4">
-                  <div className="flex items-center gap-2 w-1/3">
+                <div key={u.id} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
                     <span className="h-3 w-3 rounded-full flex-shrink-0" style={{ backgroundColor: chartColors[i % chartColors.length] }} />
                     <p className="text-sm text-black truncate">{u.name}</p>
                   </div>
-                  <div className="h-2 flex-grow rounded-full bg-stroke">
-                    <div 
-                      className="h-full rounded-full" 
-                      style={{ 
-                        width: `${unitRates[u.id]}%`, 
-                        backgroundColor: chartColors[i % chartColors.length] 
-                      }} 
-                    />
-                  </div>
-                  <p className="text-sm font-bold text-black w-12 text-right">{unitRates[u.id].toFixed(1)}%</p>
+                  <p className="text-sm font-bold text-black">{unitRates[u.id].toFixed(1)}%</p>
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+
+        <div className="rounded-lg border border-stroke bg-white px-5 pb-5 pt-7.5 shadow-default sm:px-7.5">
+          <div className="flex items-center justify-between mb-5">
+            <h3 className="text-lg font-semibold text-black">Top Wahana by Revenue</h3>
+            <Link href="/orders" className="text-sm font-medium text-primary">Lihat semua</Link>
+          </div>
+          <div className="space-y-4 pt-6">
+            {UNITS.map((u, i) => (
+              <div key={u.id} className="flex items-center gap-4">
+                <p className="text-sm font-medium text-body w-4">{i + 1}</p>
+                <p className="text-sm font-medium text-black w-40 truncate">{u.name}</p>
+                <div className="h-2 flex-grow rounded-full bg-stroke">
+                  <div className="h-full rounded-full" style={{ width: `${80 - i * 10}%`, backgroundColor: chartColors[i % chartColors.length] }} />
+                </div>
+                <p className="text-sm font-medium text-black w-32 text-right whitespace-nowrap">
+                  Rp {(unitVisitors[u.id] * 50000).toLocaleString("id-ID")}
+                </p>
+                <p className="text-sm font-bold text-black w-12 text-right">{100 - i * 5}%</p>
+              </div>
+            ))}
           </div>
         </div>
       </div>

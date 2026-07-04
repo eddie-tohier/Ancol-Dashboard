@@ -290,3 +290,11 @@ body {
   scrollbar-width: thin;
   scrollbar-color: #CBD5E1 transparent;
 }
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

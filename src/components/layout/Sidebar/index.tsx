@@ -5,11 +5,13 @@ import { usePathname } from "next/navigation"
 import {
   LayoutDashboard,
   ShoppingCart,
+  TicketCheck,
   Users,
   FileSpreadsheet,
   Ticket,
   Settings,
   UserCog,
+  Wallet,
 } from "lucide-react"
 import ClickOutside from "../ClickOutside"
 
@@ -27,6 +29,8 @@ interface MenuItem {
 const mainMenu: MenuItem[] = [
   { label: "Dashboard", path: "/dashboard", icon: <LayoutDashboard className="h-5 w-5" /> },
   { label: "Orders", path: "/orders", icon: <ShoppingCart className="h-5 w-5" /> },
+  { label: "Payments", path: "/payments", icon: <Wallet className="h-5 w-5" /> },
+  { label: "Tickets", path: "/tickets", icon: <TicketCheck className="h-5 w-5" /> },
   { label: "Reconciliation", path: "/reconciliation", icon: <FileSpreadsheet className="h-5 w-5" /> },
   { label: "Customers", path: "/customers", icon: <Users className="h-5 w-5" /> },
 ]
@@ -90,7 +94,7 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
           </Link>
         </div>
 
-        <div className="flex flex-1 flex-col overflow-y-auto duration-300 ease-linear">
+        <div className="no-scrollbar flex flex-1 flex-col overflow-y-auto duration-300 ease-linear">
           <nav className="mt-2 px-4 py-4 lg:mt-2 lg:px-6">
             <div>
               <ul className="mb-4 flex flex-col gap-1.5">{renderMenu(mainMenu)}</ul>

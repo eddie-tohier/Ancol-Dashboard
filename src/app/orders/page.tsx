@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import DefaultLayout from "@/components/layout/DefaultLayout"
 import Breadcrumb from "@/components/layout/Breadcrumb"
-import { Search, Filter, ChevronsUpDown } from "lucide-react"
+import { Search, Filter, ChevronsUpDown, ShoppingCart, Wallet, CheckCircle, XCircle, Eye } from "lucide-react"
 import { UNITS, getUnitName } from "@/lib/units"
 
 type OrderStatus = "PAID" | "ISSUED" | "FAILED" | "PENDING"
@@ -165,20 +165,32 @@ function OrdersPageContent() {
       <Breadcrumb pageName="Orders" />
 
       <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <div className="rounded-lg border border-stroke bg-white px-5 py-4 shadow-default">
-          <p className="text-sm font-medium text-body">Total Orders</p>
+        <div className="rounded-lg border border-stroke bg-white bg-[url(/cube-bg.jpg)] bg-no-repeat bg-[right_bottom] bg-[length:auto_100%] px-5 py-4 shadow-default">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-medium text-body">Total Orders</p>
+            {/* <ShoppingCart className="h-8 w-8 text-gray-300" /> */}
+          </div>
           <p className="mt-1 text-2xl font-bold text-[#334155]">{filteredOrders.length}</p>
         </div>
-        <div className="rounded-lg border border-stroke bg-white px-5 py-4 shadow-default">
-          <p className="text-sm font-medium text-body">Total Revenue</p>
+        <div className="rounded-lg border border-stroke bg-white bg-[url(/cube-bg_1.jpg)] bg-no-repeat bg-[right_bottom] bg-[length:auto_100%] px-5 py-4 shadow-default">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-medium text-body">Total Revenue</p>
+            {/* <Wallet className="h-8 w-8 text-gray-300" /> */}
+          </div>
           <p className="mt-1 text-2xl font-bold text-[#334155]">{currencyFormat(totalRevenue)}</p>
         </div>
-        <div className="rounded-lg border border-stroke bg-white px-5 py-4 shadow-default">
-          <p className="text-sm font-medium text-body">Paid / Issued</p>
+        <div className="rounded-lg border border-stroke bg-white bg-[url(/cube-bg_2.jpg)] bg-no-repeat bg-[right_bottom] bg-[length:auto_100%] px-5 py-4 shadow-default">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-medium text-body">Paid / Issued</p>
+            {/* <CheckCircle className="h-8 w-8 text-success" /> */}
+          </div>
           <p className="mt-1 text-2xl font-bold text-success">{counts.PAID + counts.ISSUED}</p>
         </div>
-        <div className="rounded-lg border border-stroke bg-white px-5 py-4 shadow-default">
-          <p className="text-sm font-medium text-body">Failed / Pending</p>
+        <div className="rounded-lg border border-stroke bg-white bg-[url(/cube-bg_3.jpg)] bg-no-repeat bg-[right_bottom] bg-[length:auto_100%] px-5 py-4 shadow-default">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-medium text-body">Failed / Pending</p>
+            {/* <XCircle className="h-8 w-8 text-danger" /> */}
+          </div>
           <p className="mt-1 text-2xl font-bold text-danger">{counts.FAILED + counts.PENDING}</p>
         </div>
       </div>
@@ -208,7 +220,7 @@ function OrdersPageContent() {
               <button
                 onClick={() => { setUnitFilter("all"); setCurrentPage(1) }}
                 className={`rounded-full px-3 py-1.5 text-xs font-medium ${
-                  unitFilter === "all" ? "bg-primary text-white" : "border border-stroke bg-white text-black hover:bg-gray-1"
+                  unitFilter === "all" ? "bg-primary text-white" : "bg-gray-100 text-black hover:bg-gray-200"
                 }`}
               >
                 Semua
@@ -218,7 +230,7 @@ function OrdersPageContent() {
                   key={u.id}
                   onClick={() => { setUnitFilter(u.id); setCurrentPage(1) }}
                   className={`rounded-full px-3 py-1.5 text-xs font-medium ${
-                    unitFilter === u.id ? "bg-primary text-white" : "border border-stroke bg-white text-black hover:bg-gray-1"
+                    unitFilter === u.id ? "bg-primary text-white" : "bg-gray-100 text-black hover:bg-gray-200"
                   }`}
                 >
                   {u.name}
@@ -259,7 +271,7 @@ function OrdersPageContent() {
                     <td className="border-b border-[#eee]">
                       <div className="flex flex-wrap gap-1">
                         {orderUnits.map((uid) => (
-                          <span key={uid} className="inline-flex rounded-full border border-stroke px-2 py-0.5 text-xs font-medium text-black">
+                          <span key={uid} className="inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-black">
                             {getUnitName(uid)}
                           </span>
                         ))}
@@ -284,7 +296,7 @@ function OrdersPageContent() {
                           setOpen(true)
                         }}
                       >
-                        Detail
+                        <Eye className="h-4 w-4" />
                       </button>
                     </td>
                   </tr>
@@ -386,7 +398,7 @@ function OrdersPageContent() {
                         <div key={i} className="flex items-center justify-between px-4 py-2.5">
                           <div className="flex items-center gap-2">
                             <span className="text-black">{item.product}</span>
-                            <span className="inline-flex rounded-full border border-stroke px-2 py-0.5 text-xs font-medium text-black">
+                            <span className="inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-black">
                               {getUnitName(item.unitId)}
                             </span>
 

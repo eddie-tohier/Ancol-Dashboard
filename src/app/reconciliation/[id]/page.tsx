@@ -5,7 +5,7 @@ import { useState } from "react"
 import Link from "next/link"
 import DefaultLayout from "@/components/layout/DefaultLayout"
 import Breadcrumb from "@/components/layout/Breadcrumb"
-import { Download, Search, ArrowLeft } from "lucide-react"
+import { Download, Search, ArrowLeft, Eye } from "lucide-react"
 import { UNITS, getUnitName } from "@/lib/units"
 
 type ResultType = "MATCH" | "TICKET_MISSING" | "TICKET_QTY_MISMATCH" | "PAYMENT_MISMATCH" | "ORPHAN_PAYMENT"
@@ -328,12 +328,13 @@ export default function ReconciliationDetailPage() {
                 <th className="min-w-[120px]">Payment</th>
                 <th className="min-w-[100px]">Ticket</th>
                 <th>Result</th>
+                <th className="min-w-[80px]">Action</th>
               </tr>
             </thead>
             <tbody>
               {filteredOrders.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-gray-400">
+                  <td colSpan={8} className="px-4 py-8 text-center text-gray-400">
                     No records found
                   </td>
                 </tr>
@@ -341,17 +342,13 @@ export default function ReconciliationDetailPage() {
                 filteredOrders.map((order) => {
                   const config = resultBadgeConfig[order.result]
                   return (
-                    <tr
-                      key={order.orderId}
-                      className="cursor-pointer hover:bg-gray-1"
-                      onClick={() => setDialogOrder(order)}
-                    >
+                    <tr key={order.orderId} className="hover:bg-gray-1">
                       <td className="border-b border-[#eee] pl-9 xl:pl-11">
                         <span className="font-medium text-black ">{order.orderId}</span>
                       </td>
                       <td className="border-b border-[#eee] ">{order.customer}</td>
                       <td className="border-b border-[#eee] ">
-                        <span className="inline-flex rounded-full border border-stroke px-2 py-0.5 text-xs font-medium text-black">
+                        <span className="inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-black">
                           {getUnitName(order.unitId)}
                         </span>
                       </td>
@@ -364,6 +361,14 @@ export default function ReconciliationDetailPage() {
                         <span className={`inline-flex rounded-full px-2.5 py-0.5 text-sm font-medium ${config.color} ${config.bg}`}>
                           {config.label}
                         </span>
+                      </td>
+                      <td className="border-b border-[#eee]">
+                        <button
+                          onClick={() => setDialogOrder(order)}
+                          className="inline-flex items-center justify-center rounded border border-stroke px-3 py-1.5 text-sm font-medium hover:bg-gray-1"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </button>
                       </td>
                     </tr>
                   )
