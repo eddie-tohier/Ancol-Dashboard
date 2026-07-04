@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react"
 import DefaultLayout from "@/components/layout/DefaultLayout"
 import Breadcrumb from "@/components/layout/Breadcrumb"
 import Link from "next/link"
-import { Calendar, ChevronLeft, ChevronRight, RefreshCw } from "lucide-react"
+import { Calendar, ChevronLeft, ChevronRight, RefreshCw, Eye } from "lucide-react"
 import { UNITS } from "@/lib/units"
 
 interface Session {
@@ -277,7 +277,7 @@ export default function ReconciliationPage() {
                     ) : (
                       <Link href={`/reconciliation/${session.id}`}>
                         <button className="inline-flex items-center justify-center rounded border border-stroke px-3 py-1.5 text-sm font-medium hover:bg-gray-1">
-                          Detail
+                          <Eye className="h-4 w-4" />
                         </button>
                       </Link>
                     )}

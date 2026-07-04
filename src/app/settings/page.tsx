@@ -19,6 +19,8 @@ const initialRoles: RolePermission[] = [
     permissions: [
       { key: "view_dashboard", name: "View Dashboard", allowed: true },
       { key: "view_orders", name: "View Orders", allowed: true },
+      { key: "view_payments", name: "View Payments", allowed: true },
+      { key: "view_tickets", name: "View Tickets", allowed: true },
       { key: "view_customers", name: "View Customers", allowed: true },
       { key: "view_reconciliation", name: "View Reconciliation", allowed: true },
       { key: "manage_users", name: "Manage Users", allowed: true },
@@ -33,6 +35,8 @@ const initialRoles: RolePermission[] = [
     permissions: [
       { key: "view_dashboard", name: "View Dashboard", allowed: true },
       { key: "view_orders", name: "View Orders", allowed: true },
+      { key: "view_payments", name: "View Payments", allowed: true },
+      { key: "view_tickets", name: "View Tickets", allowed: true },
       { key: "view_customers", name: "View Customers", allowed: true },
       { key: "view_reconciliation", name: "View Reconciliation", allowed: true },
       { key: "manage_users", name: "Manage Users", allowed: false },
@@ -47,6 +51,8 @@ const initialRoles: RolePermission[] = [
     permissions: [
       { key: "view_dashboard", name: "View Dashboard", allowed: true },
       { key: "view_orders", name: "View Orders", allowed: true },
+      { key: "view_payments", name: "View Payments", allowed: true },
+      { key: "view_tickets", name: "View Tickets", allowed: true },
       { key: "view_customers", name: "View Customers", allowed: true },
       { key: "view_reconciliation", name: "View Reconciliation", allowed: true },
       { key: "manage_users", name: "Manage Users", allowed: false },

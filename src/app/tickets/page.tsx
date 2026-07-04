@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react"
 import DefaultLayout from "@/components/layout/DefaultLayout"
 import Breadcrumb from "@/components/layout/Breadcrumb"
-import { Search, ChevronLeft, ChevronRight, Phone, Mail, ScanLine, MapPin, Clock, Undo2 } from "lucide-react"
+import { Search, ChevronLeft, ChevronRight, ScanLine, MapPin, Clock, Undo2, Eye } from "lucide-react"
 import { UNITS, getUnitName } from "@/lib/units"
 
 type TicketStatus = "ACTIVE" | "USED" | "EXPIRED" | "REFUND"
@@ -207,9 +207,9 @@ export default function TicketsPage() {
                   <td className="border-b border-[#eee]">
                     <button
                       onClick={() => { setSelected(t); setOpen(true) }}
-                      className="rounded border border-stroke px-3 py-1 text-xs font-medium text-primary hover:bg-gray-1"
+                      className="inline-flex items-center justify-center rounded border border-stroke px-3 py-1.5 text-sm font-medium hover:bg-gray-1"
                     >
-                      Detail
+                      <Eye className="h-4 w-4" />
                     </button>
                   </td>
                 </tr>
@@ -266,57 +266,71 @@ export default function TicketsPage() {
               <p className="text-sm text-body">Informasi lengkap tiket pelanggan</p>
             </div>
 
-            <div className="p-6 space-y-6">
-              <div className="flex flex-col items-center border-b border-dashed border-stroke pb-5">
-                <div className="rounded-lg bg-white p-3 shadow-sm border border-stroke">
-                  <QrCodeSvg id={selected.id} />
+            <div className="p-6 space-y-5">
+              <div className="flex items-center justify-between border-b border-dashed border-stroke pb-4">
+                <div className="shrink-0">
+                  <div className="rounded-lg bg-white p-2 shadow-sm border border-stroke">
+                    <QrCodeSvg id={selected.id} />
+                  </div>
                 </div>
-                <p className="mt-3 text-sm font-semibold text-black tracking-wider">{selected.id}</p>
-                <span className={`mt-2 inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium ${statusColor[selected.status]}`}>
+                <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium ${statusColor[selected.status]}`}>
                   {statusLabel[selected.status]}
                 </span>
-                <p className="mt-1 text-xs text-gray-500">{selected.ticketType} - {getUnitName(selected.unitId)}</p>
               </div>
 
-              <div>
-                <h4 className="text-sm font-semibold text-black mb-3 flex items-center gap-2">
-                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary" />
-                  Informasi Pelanggan
-                </h4>
-                <div className="space-y-2.5 text-sm">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="text-gray-500">Customer</p>
                   <p className="font-medium text-black">{selected.customer}</p>
-                  <div className="flex items-center gap-2 text-gray-500">
-                    <Mail className="h-3.5 w-3.5" />
-                    <span>{selected.customerEmail}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-gray-500">
-                    <Phone className="h-3.5 w-3.5" />
-                    <span>{selected.customerPhone}</span>
-                  </div>
+                </div>
+                <div>
+                  <p className="text-gray-500">Order ID</p>
+                  <p className="font-medium text-black">{selected.orderId}</p>
+                </div>
+                <div>
+                  <p className="text-gray-500">Tiket ID</p>
+                  <p className="font-medium text-black font-semibold tracking-wider">{selected.id}</p>
+                </div>
+                <div>
+                  <p className="text-gray-500">Ticket Type</p>
+                  <p className="font-medium text-black">{selected.ticketType}</p>
+                </div>
+                <div>
+                  <p className="text-gray-500">Email</p>
+                  <p className="font-medium text-black">{selected.customerEmail}</p>
+                </div>
+                <div>
+                  <p className="text-gray-500">Phone</p>
+                  <p className="font-medium text-black">{selected.customerPhone}</p>
+                </div>
+                <div>
+                  <p className="text-gray-500">Wahana</p>
+                  <p className="font-medium text-black">{getUnitName(selected.unitId)}</p>
+                </div>
+                <div>
+                  <p className="text-gray-500">Valid Until</p>
+                  <p className="font-medium text-black">{selected.validUntil}</p>
                 </div>
               </div>
 
-              <div className="border-t border-stroke pt-5">
-                <h4 className="text-sm font-semibold text-black mb-3 flex items-center gap-2">
+              <div className="border-t border-stroke pt-4">
+                <h4 className="text-sm font-semibold text-black mb-3 flex items-center gap-1.5">
                   <ScanLine className="h-4 w-4 text-primary" />
                   History Scan
                 </h4>
                 {selected.scanHistory ? (
-                  <div className="space-y-2.5 text-sm">
+                  <div className="space-y-2 text-sm">
                     <div className="flex items-center gap-2 text-gray-500">
                       <MapPin className="h-3.5 w-3.5" />
-                      <span className="text-gray-500">Device:</span>
-                      <span className="font-medium text-black">{selected.scanHistory.deviceScan}</span>
+                      <span>Device: <span className="font-medium text-black">{selected.scanHistory.deviceScan}</span></span>
                     </div>
                     <div className="flex items-center gap-2 text-gray-500">
                       <ScanLine className="h-3.5 w-3.5" />
-                      <span className="text-gray-500">Gate:</span>
-                      <span className="font-medium text-black">{selected.scanHistory.gateMasuk}</span>
+                      <span>Gate: <span className="font-medium text-black">{selected.scanHistory.gateMasuk}</span></span>
                     </div>
                     <div className="flex items-center gap-2 text-gray-500">
                       <Clock className="h-3.5 w-3.5" />
-                      <span className="text-gray-500">Waktu:</span>
-                      <span className="font-medium text-black">{selected.scanHistory.waktuDigunakan}</span>
+                      <span>Waktu: <span className="font-medium text-black">{selected.scanHistory.waktuDigunakan}</span></span>
                     </div>
                   </div>
                 ) : (
@@ -324,8 +338,8 @@ export default function TicketsPage() {
                 )}
               </div>
 
-              <div className="border-t border-stroke pt-5">
-                <h4 className="text-sm font-semibold text-black mb-3 flex items-center gap-2">
+              <div className="border-t border-stroke pt-4">
+                <h4 className="text-sm font-semibold text-black mb-3 flex items-center gap-1.5">
                   <Undo2 className="h-4 w-4 text-warning" />
                   Refund History
                 </h4>
@@ -333,8 +347,7 @@ export default function TicketsPage() {
                   <div className="text-sm">
                     <div className="flex items-center gap-2 text-gray-500">
                       <Clock className="h-3.5 w-3.5" />
-                      <span className="text-gray-500">Tanggal Refund:</span>
-                      <span className="font-medium text-black">{selected.refundDate}</span>
+                      <span>Tanggal Refund: <span className="font-medium text-black">{selected.refundDate}</span></span>
                     </div>
                   </div>
                 ) : (

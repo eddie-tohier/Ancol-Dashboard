@@ -48,7 +48,7 @@ function generatePayments(count: number): Payment[] {
     const amount = Math.floor(Math.random() * 5000000) + 50000
     const fee = Math.floor(amount * (Math.random() * 0.02 + 0.01))
     // eslint-disable-next-line no-constant-binary-expression
-    const status = i % 8 === 0 ? randomItem(["FAILED", "PENDING"]) : "SUCCESS"
+    const status: PaymentStatus = i % 8 === 0 ? randomItem(["FAILED", "PENDING"]) : "SUCCESS"
     payments.push({
       id: `PAY-${String(i).padStart(5, "0")}`,
       orderId: `ORD-${String(Math.floor(Math.random() * 35) + 1).padStart(3, "0")}`,
