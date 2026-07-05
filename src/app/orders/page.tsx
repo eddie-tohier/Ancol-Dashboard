@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import DefaultLayout from "@/components/layout/DefaultLayout"
 import Breadcrumb from "@/components/layout/Breadcrumb"
-import { Search, Filter, ChevronsUpDown, ShoppingCart, Wallet, CheckCircle, XCircle, Eye } from "lucide-react"
+import { Search, Filter, ChevronsUpDown, ShoppingCart, Wallet, CheckCircle, XCircle, Eye, Download, Calendar } from "lucide-react"
 import { UNITS, getUnitName } from "@/lib/units"
 
 type OrderStatus = "PAID" | "ISSUED" | "FAILED" | "PENDING"
@@ -20,6 +20,7 @@ interface OrderItem {
 interface Order {
   id: string
   customer: { name: string; phone: string; email: string }
+  orderDate: string
   visitDate: string
   amount: number
   status: OrderStatus
@@ -94,8 +95,10 @@ function generateOrders(count: number): Order[] {
     const customer = randomItem(customers)
     const status = randomItem(statuses)
     const payment = randomItem(payments)
-    const day = randomInt(1, 30)
-    const visitDate = `2026-06-${String(day).padStart(2, "0")}`
+    const orderDay = randomInt(1, 28)
+    const visitDay = randomInt(orderDay, 30)
+    const orderDate = `2026-06-${String(orderDay).padStart(2, "0")}`
+    const visitDate = `2026-06-${String(visitDay).padStart(2, "0")}`
 
     const unitCount = randomInt(1, 3)
     const usedUnits = new Set<string>()
@@ -114,7 +117,7 @@ function generateOrders(count: number): Order[] {
     const ticketStart = (i - 1) * 5 + 1
     const tickets = Array.from({ length: ticketCount }, (_, k) => `TIX-${String(ticketStart + k).padStart(3, "0")}`)
 
-    orders.push({ id, customer, visitDate, amount, status, payment, items, tickets })
+    orders.push({ id, customer, orderDate, visitDate, amount, status, payment, items, tickets })
   }
   return orders
 }
@@ -136,6 +139,9 @@ function OrdersPageContent() {
   const [selected, setSelected] = useState<Order | null>(null)
   const [open, setOpen] = useState(false)
   const [unitFilter, setUnitFilter] = useState<string>("all")
+  const [statusFilter, setStatusFilter] = useState<OrderStatus | "all">("all")
+  const [dateFrom, setDateFrom] = useState("")
+  const [dateTo, setDateTo] = useState("")
   const [filterOpen, setFilterOpen] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
 
@@ -148,9 +154,13 @@ function OrdersPageContent() {
     }
   }, [searchParams])
 
-  const filteredOrders = unitFilter === "all"
-    ? orders
-    : orders.filter((o) => o.items.some((it) => it.unitId === unitFilter))
+  const filteredOrders = orders.filter((o) => {
+    if (unitFilter !== "all" && !o.items.some((it) => it.unitId === unitFilter)) return false
+    if (statusFilter !== "all" && o.status !== statusFilter) return false
+    if (dateFrom && o.orderDate < dateFrom) return false
+    if (dateTo && o.orderDate > dateTo) return false
+    return true
+  })
 
   const pageSize = 10
   const totalPages = Math.ceil(filteredOrders.length / pageSize)
@@ -159,6 +169,30 @@ function OrdersPageContent() {
   const totalRevenue = filteredOrders.reduce((s, o) => s + o.amount, 0)
   const counts = { PAID: 0, ISSUED: 0, FAILED: 0, PENDING: 0 } as Record<OrderStatus, number>
   filteredOrders.forEach((o) => { counts[o.status]++ })
+
+  function exportCSV() {
+    const rows = filteredOrders.map((o) => [
+      o.id,
+      o.customer.name,
+      o.customer.phone,
+      o.customer.email,
+      o.orderDate,
+      o.visitDate,
+      o.items.map((it) => `${it.product} x${it.qty}`).join("; "),
+      currencyFormat(o.amount),
+      o.status,
+      o.payment,
+    ])
+    const header = ["Order ID", "Customer", "No. WA", "Email", "Order Date", "Visit Date", "Items", "Amount", "Status", "Payment"]
+    const csv = [header.join(","), ...rows.map((r) => r.map((c) => `"${c}"`).join(","))].join("\n")
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `orders_export_${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
 
   return (
     <DefaultLayout>
@@ -196,22 +230,62 @@ function OrdersPageContent() {
       </div>
 
       <div className="mb-4 rounded-lg border border-stroke bg-white shadow-default">
-        <div className="flex items-center justify-between border-b border-stroke px-5 py-3">
-          <div className="relative w-72">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-            <input
-              placeholder="Cari order ID, customer..."
-              className="compact-input w-full !pl-10 pr-3"
-            />
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-stroke px-5 py-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="relative w-60">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <input
+                placeholder="Cari order ID, customer..."
+                className="compact-input w-full !pl-10 pr-3"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-body" />
+              <input
+                type="date"
+                value={dateFrom}
+                onChange={(e) => { setDateFrom(e.target.value); setCurrentPage(1) }}
+                className="compact-input w-36 !pl-3 text-sm"
+              />
+              <span className="text-body">-</span>
+              <input
+                type="date"
+                value={dateTo}
+                onChange={(e) => { setDateTo(e.target.value); setCurrentPage(1) }}
+                className="compact-input w-36 !pl-3 text-sm"
+              />
+            </div>
           </div>
-          <button
-            onClick={() => setFilterOpen(!filterOpen)}
-            className="inline-flex items-center justify-center gap-2 rounded border border-stroke px-3 py-1.5 text-sm font-medium hover:bg-gray-1"
-          >
-            <Filter className="h-4 w-4" />
-            {unitFilter === "all" ? "Unit" : getUnitName(unitFilter)}
-            <ChevronsUpDown className="h-3.5 w-3.5" />
-          </button>
+          <div className="flex items-center gap-2">
+            <div className="flex rounded-md border border-stroke p-0.5">
+              {(["all", ...statuses] as const).map((s) => (
+                <button
+                  key={s}
+                  onClick={() => { setStatusFilter(s); setCurrentPage(1) }}
+                  className={`px-2.5 py-1 text-xs font-medium rounded ${
+                    statusFilter === s ? "bg-primary text-white" : "text-body hover:text-primary"
+                  }`}
+                >
+                  {s === "all" ? "Semua" : s}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => setFilterOpen(!filterOpen)}
+              className="inline-flex items-center justify-center gap-2 rounded border border-stroke px-3 py-1.5 text-sm font-medium hover:bg-gray-1"
+            >
+              <Filter className="h-4 w-4" />
+              {unitFilter === "all" ? "Unit" : getUnitName(unitFilter)}
+              <ChevronsUpDown className="h-3.5 w-3.5" />
+            </button>
+            <button
+              onClick={exportCSV}
+              className="inline-flex items-center justify-center gap-2 rounded border border-stroke px-3 py-1.5 text-sm font-medium hover:bg-gray-1"
+            >
+              <Download className="h-4 w-4" />
+              Export
+            </button>
+          </div>
         </div>
 
         {filterOpen && (
@@ -245,7 +319,9 @@ function OrdersPageContent() {
             <thead>
               <tr className="bg-gray-2 text-left">
                 <th className="min-w-[110px] xl:pl-11">Order ID</th>
-                <th className="min-w-[150px]">Customer</th>
+                <th className="min-w-[140px]">Customer</th>
+                <th className="min-w-[130px]">No. WA</th>
+                <th className="min-w-[120px]">Order Date</th>
                 <th className="min-w-[120px]">Visit Date</th>
                 <th className="min-w-[150px]">Unit</th>
                 <th className="min-w-[120px]">Amount</th>
@@ -264,6 +340,12 @@ function OrdersPageContent() {
                     </td>
                     <td className="border-b border-[#eee]">
                       <span className="text-black">{order.customer.name}</span>
+                    </td>
+                    <td className="border-b border-[#eee]">
+                      <span className="text-black">{order.customer.phone}</span>
+                    </td>
+                    <td className="border-b border-[#eee]">
+                      <span className="text-black">{order.orderDate}</span>
                     </td>
                     <td className="border-b border-[#eee]">
                       <span className="text-black">{order.visitDate}</span>
@@ -304,7 +386,7 @@ function OrdersPageContent() {
               })}
               {filteredOrders.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="px-4 py-8 text-center text-sm text-body">
+                  <td colSpan={10} className="px-4 py-8 text-center text-sm text-body">
                     Tidak ada order untuk wahana ini
                   </td>
                 </tr>
