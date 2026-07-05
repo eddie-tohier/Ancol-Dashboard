@@ -282,10 +282,13 @@ export default function DashboardPage() {
         <div className="xl:col-span-2 rounded-lg border border-stroke bg-white px-5 pb-5 pt-7.5 shadow-default sm:px-7.5">
           <div className="mb-4 flex items-center justify-between">
             <h3 className="text-base font-semibold text-black">Needs Action</h3>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-body">Show example if data:</span>
+              <div className="flex items-center gap-1">
               <button onClick={() => setDemoMode("normal")} className={`rounded px-2 py-1 text-xs font-medium ${demoMode === "normal" ? "bg-primary text-white" : "bg-gray-1 text-black hover:bg-gray-2"}`}>Normal</button>
               <button onClick={() => setDemoMode("empty")} className={`rounded px-2 py-1 text-xs font-medium ${demoMode === "empty" ? "bg-primary text-white" : "bg-gray-1 text-black hover:bg-gray-2"}`}>Empty</button>
               <button onClick={() => setDemoMode("full")} className={`rounded px-2 py-1 text-xs font-medium ${demoMode === "full" ? "bg-primary text-white" : "bg-gray-1 text-black hover:bg-gray-2"}`}>Full</button>
+            </div>
             </div>
           </div>
           {displayAlerts.length === 0 ? (
