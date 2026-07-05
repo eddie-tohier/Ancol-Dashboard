@@ -6,6 +6,7 @@ interface PaginationProps {
   totalItems: number
   pageSize: number
   onPageChange: (page: number) => void
+  label?: string
 }
 
 export default function Pagination({
@@ -14,13 +15,14 @@ export default function Pagination({
   totalItems,
   pageSize,
   onPageChange,
+  label = "items",
 }: PaginationProps) {
   if (totalPages <= 1) return null
 
   return (
     <div className="flex items-center justify-between border-t border-stroke px-5 py-3">
       <p className="text-sm text-body">
-        Showing {(currentPage - 1) * pageSize + 1}-{Math.min(currentPage * pageSize, totalItems)} of {totalItems} orders
+        Showing {(currentPage - 1) * pageSize + 1}-{Math.min(currentPage * pageSize, totalItems)} of {totalItems} {label}
       </p>
       <div className="flex items-center gap-1">
         <button

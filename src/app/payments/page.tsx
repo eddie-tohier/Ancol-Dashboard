@@ -4,8 +4,11 @@ import { useState, useMemo } from "react"
 import DefaultLayout from "@/components/layout/DefaultLayout"
 import Breadcrumb from "@/components/layout/Breadcrumb"
 import dynamic from "next/dynamic"
-import { Search, ChevronLeft, ChevronRight, Wallet, CheckCircle, Eye } from "lucide-react"
+import { Wallet, CheckCircle, Eye, Download } from "lucide-react"
 import StatCard from "@/components/ui/StatCard"
+import SearchInput from "@/components/ui/SearchInput"
+import Pagination from "@/components/ui/Pagination"
+import SortableTh from "@/components/ui/SortableTh"
 
 const ReactApexChart = dynamic(() => import("react-apexcharts"), { ssr: false })
 
@@ -102,9 +105,42 @@ export default function PaymentsPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [selected, setSelected] = useState<Payment | null>(null)
   const [open, setOpen] = useState(false)
+  const [search, setSearch] = useState("")
+  const [sortKey, setSortKey] = useState<string | null>(null)
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc")
   const pageSize = 15
   const totalPages = Math.ceil(payments.length / pageSize)
-  const paginated = useMemo(() => payments.slice((currentPage - 1) * pageSize, currentPage * pageSize), [currentPage])
+
+  function handleSort(key: string) {
+    if (sortKey === key) {
+      if (sortDir === "asc") { setSortDir("desc") }
+      else { setSortKey(null); setSortDir("asc") }
+    } else {
+      setSortKey(key)
+      setSortDir("asc")
+    }
+    setCurrentPage(1)
+  }
+
+  const sortedPayments = useMemo(() => {
+    const list = [...payments]
+    if (!sortKey) return list
+    return list.sort((a, b) => {
+      let aVal: string | number = "", bVal: string | number = ""
+      if (sortKey === "id") { aVal = a.id; bVal = b.id }
+      else if (sortKey === "orderId") { aVal = a.orderId; bVal = b.orderId }
+      else if (sortKey === "customer") { aVal = a.customer; bVal = b.customer }
+      else if (sortKey === "amount") { aVal = a.amount; bVal = b.amount }
+      else if (sortKey === "method") { aVal = a.method; bVal = b.method }
+      else if (sortKey === "status") { aVal = a.status; bVal = b.status }
+      else if (sortKey === "paidAt") { aVal = a.paidAt; bVal = b.paidAt }
+      if (aVal < bVal) return sortDir === "asc" ? -1 : 1
+      if (aVal > bVal) return sortDir === "asc" ? 1 : -1
+      return 0
+    })
+  }, [sortKey, sortDir])
+
+  const paginated = useMemo(() => sortedPayments.slice((currentPage - 1) * pageSize, currentPage * pageSize), [sortedPayments, currentPage, pageSize])
 
   const totalRevenue = payments.filter(p => p.status === "SUCCESS").reduce((s, p) => s + p.amount, 0)
   const todayRevenue = payments.filter(p => p.status === "SUCCESS" && p.paidAt.startsWith("2026-07-05")).reduce((s, p) => s + p.amount, 0)
@@ -114,11 +150,11 @@ export default function PaymentsPage() {
       <Breadcrumb pageName="Payments" />
 
       <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-5">
-        <StatCard label="Today's Revenue" value={`Rp ${todayRevenue.toLocaleString("id-ID")}`} size="sm" />
-        <StatCard label="This Month's Revenue" value={`Rp ${totalRevenue.toLocaleString("id-ID")}`} size="sm" />
-        <StatCard label="Success Rate" value={`${successRate}%`} valueClassName="text-success" size="sm" />
-        <StatCard label="Failed Payment" value={payments.filter(p => p.status === "FAILED").length} valueClassName="text-danger" size="sm" />
-        <StatCard label="Pending Payment" value={payments.filter(p => p.status === "PENDING").length} valueClassName="text-warning" size="sm" />
+        <StatCard label="Today's Revenue" value={`Rp ${todayRevenue.toLocaleString("id-ID")}`} size="sm" bgImage="/cube-bg.jpg" />
+        <StatCard label="This Month's Revenue" value={`Rp ${totalRevenue.toLocaleString("id-ID")}`} size="sm" bgImage="/cube-bg_1.jpg" />
+        <StatCard label="Success Rate" value={`${successRate}%`} valueClassName="text-success" size="sm" bgImage="/cube-bg_2.jpg" />
+        <StatCard label="Failed Payment" value={payments.filter(p => p.status === "FAILED").length} valueClassName="text-danger" size="sm" bgImage="/cube-bg_3.jpg" />
+        <StatCard label="Pending Payment" value={payments.filter(p => p.status === "PENDING").length} valueClassName="text-warning" size="sm" bgImage="/cube-bg_4.jpg" />
       </div>
 
       <div className="mb-6">
@@ -144,10 +180,6 @@ export default function PaymentsPage() {
 
       <div className="rounded-lg border border-stroke bg-white shadow-default">
         <div className="flex items-center justify-between border-b border-stroke px-5 py-3">
-          <div className="relative w-72">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-            <input placeholder="Search payment ID, order ID..." className="compact-input w-full !pl-10 pr-3" />
-          </div>
           <div className="flex items-center gap-3">
             <select className="compact-input text-sm">
               <option>All Date</option>
@@ -164,19 +196,26 @@ export default function PaymentsPage() {
               <option>Pending</option>
             </select>
           </div>
+          <div className="flex items-center gap-2">
+            <SearchInput value={search} onChange={setSearch} placeholder="Search payment ID, order ID..." />
+            <button className="inline-flex items-center justify-center gap-2 rounded border border-stroke px-3 py-1.5 text-sm font-medium hover:bg-gray-1">
+              <Download className="h-4 w-4" />
+              Export
+            </button>
+          </div>
         </div>
 
         <div className="max-w-full overflow-x-auto">
           <table className="compact-table w-full table-auto">
             <thead>
               <tr className="bg-gray-2 text-left">
-                <th className="min-w-[130px] xl:pl-11">Payment ID</th>
-                <th className="min-w-[110px]">Order ID</th>
-                <th className="min-w-[150px]">Customer</th>
-                <th className="min-w-[120px]">Amount</th>
-                <th className="min-w-[120px]">Payment Method</th>
-                <th className="min-w-[90px]">Status</th>
-                <th className="min-w-[140px]">Paid At</th>
+                <SortableTh label="Payment ID" column="id" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} className="min-w-[130px] xl:pl-11" />
+                <SortableTh label="Order ID" column="orderId" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} className="min-w-[110px]" />
+                <SortableTh label="Customer" column="customer" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} className="min-w-[150px]" />
+                <SortableTh label="Amount" column="amount" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} className="min-w-[120px]" />
+                <SortableTh label="Payment Method" column="method" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} className="min-w-[120px]" />
+                <SortableTh label="Status" column="status" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} className="min-w-[90px]" />
+                <SortableTh label="Paid At" column="paidAt" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} className="min-w-[140px]" />
                 <th className="min-w-[90px]">Action</th>
               </tr>
             </thead>
@@ -218,38 +257,14 @@ export default function PaymentsPage() {
           </table>
         </div>
 
-        <div className="flex items-center justify-between border-t border-stroke px-5 py-3">
-          <p className="text-sm text-gray-500">
-            Showing {(currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, payments.length)} of {payments.length}
-          </p>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-              className="inline-flex items-center justify-center rounded border border-stroke px-3 py-1.5 text-sm font-medium hover:bg-gray-1 disabled:opacity-40"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-              <button
-                key={page}
-                onClick={() => setCurrentPage(page)}
-                className={`inline-flex h-8 w-8 items-center justify-center rounded text-sm font-medium ${
-                  page === currentPage ? "bg-primary text-white" : "border border-stroke hover:bg-gray-1"
-                }`}
-              >
-                {page}
-              </button>
-            ))}
-            <button
-              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
-              className="inline-flex items-center justify-center rounded border border-stroke px-3 py-1.5 text-sm font-medium hover:bg-gray-1 disabled:opacity-40"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={payments.length}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          label="payments"
+        />
       </div>
 
       {open && selected && (

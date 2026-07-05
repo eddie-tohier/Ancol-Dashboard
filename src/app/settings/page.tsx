@@ -1,10 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useSession } from "next-auth/react"
 import DefaultLayout from "@/components/layout/DefaultLayout"
 import Breadcrumb from "@/components/layout/Breadcrumb"
-import { Check } from "lucide-react"
+import { Check, GripVertical } from "lucide-react"
+import { defaultMenuWithSep, getMenuWithSep, saveMenuOrder, resetMenuOrder, SEP } from "@/lib/menuConfig"
 
 interface RolePermission {
   role: string
@@ -73,6 +74,66 @@ export default function SettingsPage() {
   const [saved, setSaved] = useState(false)
   const [rbacSaving, setRbacSaving] = useState(false)
   const [rbacSaved, setRbacSaved] = useState(false)
+  const [menuItems, setMenuItems] = useState<string[]>(defaultMenuWithSep)
+  const [dragIdx, setDragIdx] = useState<number | null>(null)
+  const [dropIdx, setDropIdx] = useState<number | null>(null)
+  const dragItem = useRef<number | null>(null)
+
+  useEffect(() => {
+    setMenuItems(getMenuWithSep())
+  }, [])
+
+  const menuLabel: Record<string, string> = {
+    "/dashboard": "Dashboard",
+    "/orders": "Orders",
+    "/payments": "Payments",
+    "/tickets": "Tickets",
+    "/reconciliation": "Reconciliation",
+    "/customers": "Customers",
+    "/wahana": "Wahana",
+    "/settings": "Settings",
+    "/admin/users": "Admin Users",
+  }
+
+  function handleDragStart(idx: number) {
+    dragItem.current = idx
+    setDragIdx(idx)
+  }
+
+  function handleDragOver(e: React.DragEvent, idx: number) {
+    e.preventDefault()
+    setDropIdx(idx)
+  }
+
+  function handleDrop() {
+    if (dragItem.current === null) return
+    const from = dragItem.current
+    const to = dropIdx ?? from
+    if (from === to) { setDragIdx(null); setDropIdx(null); return }
+    const updated = [...menuItems]
+    const [moved] = updated.splice(from, 1)
+    updated.splice(to, 0, moved)
+    setMenuItems(updated)
+    setDragIdx(null)
+    setDropIdx(null)
+    dragItem.current = null
+  }
+
+  function handleDragEnd() {
+    setDragIdx(null)
+    setDropIdx(null)
+    dragItem.current = null
+  }
+
+  function handleSaveOrder() {
+    saveMenuOrder(menuItems)
+    window.location.reload()
+  }
+
+  function handleResetOrder() {
+    resetMenuOrder()
+    setMenuItems(defaultMenuWithSep)
+  }
 
   async function handleProfileSave(e: React.FormEvent) {
     e.preventDefault()
@@ -105,6 +166,7 @@ export default function SettingsPage() {
   const tabs = [
     { key: "profile", label: "Profile" },
     { key: "rbac", label: "RBAC Roles" },
+    { key: "menuorder", label: "Menu Order" },
   ]
 
   return (
@@ -212,6 +274,71 @@ export default function SettingsPage() {
               {rbacSaved && (
                 <span className="text-sm text-success">Changes saved (local)</span>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === "menuorder" && (
+        <div className="mb-4 rounded-lg border border-stroke bg-white shadow-default">
+          <div className="border-b border-stroke px-5 py-3">
+            <h3 className="font-medium text-black">Menu Order</h3>
+            <p className="mt-0.5 text-xs text-body">Drag and drop to reorder sidebar navigation. Changes are saved to localStorage.</p>
+          </div>
+          <div className="p-5">
+            <div className="space-y-1">
+              {menuItems.map((item, idx) =>
+                item === SEP ? (
+                  <div
+                    key="__sep__"
+                    draggable
+                    onDragStart={() => handleDragStart(idx)}
+                    onDragOver={(e) => handleDragOver(e, idx)}
+                    onDrop={handleDrop}
+                    onDragEnd={handleDragEnd}
+                    className={`flex items-center gap-3 rounded-lg border px-4 py-2 cursor-grab active:cursor-grabbing transition-colors ${
+                      dragIdx === idx ? "border-primary bg-primary/5" : "border-dashed border-gray-300 bg-gray-50"
+                    } ${dropIdx === idx && dragIdx !== null && dragIdx !== idx ? "border-primary border-solid" : ""}`}
+                  >
+                    <GripVertical className="h-4 w-4 text-gray-400 shrink-0" />
+                    <hr className="flex-1 border-stroke" />
+                    <span className="text-[10px] font-medium uppercase text-gray-400">Separator</span>
+                    <hr className="flex-1 border-stroke" />
+                  </div>
+                ) : (
+                  <div
+                    key={item}
+                    draggable
+                    onDragStart={() => handleDragStart(idx)}
+                    onDragOver={(e) => handleDragOver(e, idx)}
+                    onDrop={handleDrop}
+                    onDragEnd={handleDragEnd}
+                    className={`flex items-center gap-3 rounded-lg border px-4 py-3 cursor-grab active:cursor-grabbing transition-colors ${
+                      dragIdx === idx ? "border-primary bg-primary/5" : "border-stroke bg-white"
+                    } ${dropIdx === idx && dragIdx !== null && dragIdx !== idx ? "border-dashed border-primary" : ""}`}
+                  >
+                    <GripVertical className="h-4 w-4 text-gray-400 shrink-0" />
+                    <span className="text-sm font-medium text-black">{menuLabel[item] || item}</span>
+                    <span className="ml-auto text-[10px] font-medium text-gray-400 uppercase">
+                      {menuItems.indexOf(item) < menuItems.indexOf(SEP) ? "Main" : "Other"}
+                    </span>
+                  </div>
+                )
+              )}
+            </div>
+            <div className="mt-4 flex items-center gap-3">
+              <button
+                onClick={handleSaveOrder}
+                className="rounded bg-primary px-4 py-1.5 text-sm font-medium text-white hover:bg-opacity-90"
+              >
+                Save Order
+              </button>
+              <button
+                onClick={handleResetOrder}
+                className="rounded border border-stroke px-4 py-1.5 text-sm font-medium text-black hover:bg-gray-1"
+              >
+                Reset to Default
+              </button>
             </div>
           </div>
         </div>

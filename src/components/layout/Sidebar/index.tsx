@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
@@ -14,60 +15,44 @@ import {
   Wallet,
 } from "lucide-react"
 import ClickOutside from "../ClickOutside"
+import { getMenuWithSep, defaultMenuWithSep, SEP } from "@/lib/menuConfig"
 
 interface SidebarProps {
   sidebarOpen: boolean
   setSidebarOpen: (open: boolean) => void
 }
 
-interface MenuItem {
-  label: string
-  path: string
-  icon: React.ReactNode
-}
-
-const mainMenu: MenuItem[] = [
-  { label: "Dashboard", path: "/dashboard", icon: <LayoutDashboard className="h-5 w-5" /> },
-  { label: "Orders", path: "/orders", icon: <ShoppingCart className="h-5 w-5" /> },
-  { label: "Payments", path: "/payments", icon: <Wallet className="h-5 w-5" /> },
-  { label: "Tickets", path: "/tickets", icon: <TicketCheck className="h-5 w-5" /> },
-  { label: "Reconciliation", path: "/reconciliation", icon: <FileSpreadsheet className="h-5 w-5" /> },
-  { label: "Customers", path: "/customers", icon: <Users className="h-5 w-5" /> },
-]
-
-const otherMenu: MenuItem[] = [
-  { label: "Wahana", path: "/wahana", icon: <Ticket className="h-5 w-5" /> },
-  { label: "Settings", path: "/settings", icon: <Settings className="h-5 w-5" /> },
-  { label: "Admin Users", path: "/admin/users", icon: <UserCog className="h-5 w-5" /> },
-]
-
 export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
   const pathname = usePathname()
+  const [menuWithSep, setMenuWithSep] = useState<string[]>(defaultMenuWithSep)
+
+  useEffect(() => {
+    setMenuWithSep(getMenuWithSep())
+  }, [])
+
+  const sepIdx = menuWithSep.indexOf(SEP)
+  const isMainSection = (path: string) =>
+    menuWithSep.indexOf(path) !== -1 && menuWithSep.indexOf(path) < sepIdx
+
+  const menuMap: Record<string, { path: string; label: string; icon: React.ReactNode }> = {
+    "/dashboard": { path: "/dashboard", label: "Dashboard", icon: <LayoutDashboard className="h-5 w-5" /> },
+    "/orders": { path: "/orders", label: "Orders", icon: <ShoppingCart className="h-5 w-5" /> },
+    "/payments": { path: "/payments", label: "Payments", icon: <Wallet className="h-5 w-5" /> },
+    "/tickets": { path: "/tickets", label: "Tickets", icon: <TicketCheck className="h-5 w-5" /> },
+    "/reconciliation": { path: "/reconciliation", label: "Reconciliation", icon: <FileSpreadsheet className="h-5 w-5" /> },
+    "/customers": { path: "/customers", label: "Customers", icon: <Users className="h-5 w-5" /> },
+    "/wahana": { path: "/wahana", label: "Wahana", icon: <Ticket className="h-5 w-5" /> },
+    "/settings": { path: "/settings", label: "Settings", icon: <Settings className="h-5 w-5" /> },
+    "/admin/users": { path: "/admin/users", label: "Admin Users", icon: <UserCog className="h-5 w-5" /> },
+  }
 
   function isActive(path: string): boolean {
     if (path === "/dashboard") return pathname === "/dashboard"
     return pathname.startsWith(path)
   }
 
-  function renderMenu(items: MenuItem[]) {
-    return items.map((item) => {
-      const active = isActive(item.path)
-      return (
-        <li key={item.path}>
-          <Link
-            href={item.path}
-            onClick={() => setSidebarOpen(false)}
-            className={`group relative flex items-center gap-2.5 rounded-md px-4 py-2 font-medium text-gray-400 duration-300 ease-in-out hover:text-white ${
-              active ? "text-white" : ""
-            }`}
-          >
-            {item.icon}
-            {item.label}
-          </Link>
-        </li>
-      )
-    })
-  }
+  const mainItems = menuWithSep.filter((p) => p !== SEP && isMainSection(p)).map((p) => menuMap[p]).filter(Boolean)
+  const otherItems = menuWithSep.filter((p) => p !== SEP && !isMainSection(p)).map((p) => menuMap[p]).filter(Boolean)
 
   return (
     <ClickOutside onClick={() => setSidebarOpen(false)}>
@@ -85,12 +70,42 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
         <div className="no-scrollbar flex flex-1 flex-col overflow-y-auto duration-300 ease-linear">
           <nav className="mt-2 px-4 py-4 lg:mt-2 lg:px-6">
             <div>
-              <ul className="mb-4 flex flex-col gap-1.5">{renderMenu(mainMenu)}</ul>
+              <ul className="mb-4 flex flex-col gap-1.5">
+                {mainItems.map((item) => (
+                  <li key={item.path}>
+                    <Link
+                      href={item.path}
+                      onClick={() => setSidebarOpen(false)}
+                      className={`group relative flex items-center gap-2.5 rounded-md px-4 py-2 font-medium text-gray-400 duration-300 ease-in-out hover:text-white ${
+                        isActive(item.path) ? "text-white" : ""
+                      }`}
+                    >
+                      {item.icon}
+                      {item.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
             </div>
 
             <hr className="mb-4 mx-4 border-gray-600" />
             <div>
-              <ul className="mb-4 flex flex-col gap-1.5">{renderMenu(otherMenu)}</ul>
+              <ul className="mb-4 flex flex-col gap-1.5">
+                {otherItems.map((item) => (
+                  <li key={item.path}>
+                    <Link
+                      href={item.path}
+                      onClick={() => setSidebarOpen(false)}
+                      className={`group relative flex items-center gap-2.5 rounded-md px-4 py-2 font-medium text-gray-400 duration-300 ease-in-out hover:text-white ${
+                        isActive(item.path) ? "text-white" : ""
+                      }`}
+                    >
+                      {item.icon}
+                      {item.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
             </div>
           </nav>
         </div>

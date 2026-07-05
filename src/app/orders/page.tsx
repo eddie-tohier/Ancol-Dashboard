@@ -4,10 +4,11 @@ import { useState, useEffect, useRef, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import DefaultLayout from "@/components/layout/DefaultLayout"
 import Breadcrumb from "@/components/layout/Breadcrumb"
-import { Eye, Download, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react"
+import { Eye, Download } from "lucide-react"
 import SearchInput from "@/components/ui/SearchInput"
 import Pagination from "@/components/ui/Pagination"
 import StatCard from "@/components/ui/StatCard"
+import SortableTh from "@/components/ui/SortableTh"
 import { getUnitName } from "@/lib/units"
 import FilterSortDropdown from "@/components/filters/FilterSortDropdown"
 import DateRangeFilter from "@/components/filters/DateRangeFilter"
@@ -397,44 +398,14 @@ function OrdersPageContent() {
           <table className="compact-table w-full table-auto">
             <thead>
               <tr className="bg-gray-2 text-left">
-                <th className="min-w-[110px] xl:pl-11 cursor-pointer select-none whitespace-nowrap" onClick={() => handleSort("id")}>
-                  <span className="inline-flex items-center gap-1">
-                    Order ID
-                    {sortKey === "id" ? (sortDir === "asc" ? <ArrowUp className="h-3.5 w-3.5 text-orange-600" /> : <ArrowDown className="h-3.5 w-3.5 text-orange-600" />) : <ArrowUpDown className="h-3.5 w-3.5 text-gray-300" />}
-                  </span>
-                </th>
-                <th className="min-w-[140px] cursor-pointer select-none whitespace-nowrap" onClick={() => handleSort("customer")}>
-                  <span className="inline-flex items-center gap-1">
-                    Customer
-                    {sortKey === "customer" ? (sortDir === "asc" ? <ArrowUp className="h-3.5 w-3.5 text-orange-600" /> : <ArrowDown className="h-3.5 w-3.5 text-orange-600" />) : <ArrowUpDown className="h-3.5 w-3.5 text-gray-300" />}
-                  </span>
-                </th>
+                <SortableTh label="Order ID" column="id" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} className="min-w-[110px] xl:pl-11" />
+                <SortableTh label="Customer" column="customer" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} className="min-w-[140px]" />
                 <th className="min-w-[130px]">No. WA</th>
                 <th className="min-w-[150px]">Unit</th>
-                <th className="min-w-[120px] cursor-pointer select-none whitespace-nowrap" onClick={() => handleSort("amount")}>
-                  <span className="inline-flex items-center gap-1">
-                    Amount
-                    {sortKey === "amount" ? (sortDir === "asc" ? <ArrowUp className="h-3.5 w-3.5 text-orange-600" /> : <ArrowDown className="h-3.5 w-3.5 text-orange-600" />) : <ArrowUpDown className="h-3.5 w-3.5 text-gray-300" />}
-                  </span>
-                </th>
-                <th className="min-w-[100px] cursor-pointer select-none whitespace-nowrap" onClick={() => handleSort("status")}>
-                  <span className="inline-flex items-center gap-1">
-                    Status
-                    {sortKey === "status" ? (sortDir === "asc" ? <ArrowUp className="h-3.5 w-3.5 text-orange-600" /> : <ArrowDown className="h-3.5 w-3.5 text-orange-600" />) : <ArrowUpDown className="h-3.5 w-3.5 text-gray-300" />}
-                  </span>
-                </th>
-                <th className="min-w-[120px] cursor-pointer select-none whitespace-nowrap" onClick={() => handleSort("payment")}>
-                  <span className="inline-flex items-center gap-1">
-                    Payment
-                    {sortKey === "payment" ? (sortDir === "asc" ? <ArrowUp className="h-3.5 w-3.5 text-orange-600" /> : <ArrowDown className="h-3.5 w-3.5 text-orange-600" />) : <ArrowUpDown className="h-3.5 w-3.5 text-gray-300" />}
-                  </span>
-                </th>
-                <th className="min-w-[120px] cursor-pointer select-none whitespace-nowrap" onClick={() => handleSort("orderDate")}>
-                  <span className="inline-flex items-center gap-1">
-                    Order Date
-                    {sortKey === "orderDate" ? (sortDir === "asc" ? <ArrowUp className="h-3.5 w-3.5 text-orange-600" /> : <ArrowDown className="h-3.5 w-3.5 text-orange-600" />) : <ArrowUpDown className="h-3.5 w-3.5 text-gray-300" />}
-                  </span>
-                </th>
+                <SortableTh label="Amount" column="amount" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} className="min-w-[120px]" />
+                <SortableTh label="Status" column="status" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} className="min-w-[100px]" />
+                <SortableTh label="Payment" column="payment" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} className="min-w-[120px]" />
+                <SortableTh label="Order Date" column="orderDate" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} className="min-w-[120px]" />
                 <th className="min-w-[120px] whitespace-nowrap">Visit Date</th>
                 <th className="text-right">Action</th>
               </tr>
@@ -510,6 +481,7 @@ function OrdersPageContent() {
           totalItems={filteredOrders.length}
           pageSize={pageSize}
           onPageChange={setCurrentPage}
+          label="orders"
         />
       </div>
 
