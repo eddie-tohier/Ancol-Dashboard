@@ -12,10 +12,10 @@ import { UNITS } from "@/lib/units"
 const ReactApexChart = dynamic(() => import("react-apexcharts"), { ssr: false })
 
 const periods = [
-  { label: "Hari Ini", value: "today" },
-  { label: "Minggu Ini", value: "week" },
-  { label: "Bulan Ini", value: "month" },
-  { label: "Tahun Ini", value: "year" },
+  { label: "Today", value: "today" },
+  { label: "This Week", value: "week" },
+  { label: "This Month", value: "month" },
+  { label: "This Year", value: "year" },
 ]
 
 const chartColors = ["#008FFB", "#00E396", "#FEB019", "#FF4560", "#775DD0", "#00B4D8"]
@@ -31,10 +31,10 @@ const orphanPayments = 3
 const totalRevenue = 185000000
 
 const alerts = [
-  { label: "Mismatch Data", desc: `${totalMismatch} transaksi tidak cocok`, link: "/reconciliation", action: "Review" },
-  { label: "Orphan Payment", desc: `${orphanPayments} pembayaran tanpa pesanan`, link: "/payments", action: "Cek" },
-  { label: "Sync Error — Dufan", desc: "Gagal sinkronisasi 30 menit lalu", link: "/wahana", action: "Periksa" },
-  { label: "Sync Error — Atlantis", desc: "Gagal sinkronisasi 2 jam lalu", link: "/wahana", action: "Periksa" },
+  { label: "Mismatch Data", desc: `${totalMismatch} transactions don't match`, link: "/reconciliation", action: "Review" },
+  { label: "Orphan Payment", desc: `${orphanPayments} payments without orders`, link: "/payments", action: "Check" },
+  { label: "Sync Error — Dufan", desc: "Sync failed 30 minutes ago", link: "/wahana", action: "Check" },
+  { label: "Sync Error — Atlantis", desc: "Sync failed 2 hours ago", link: "/wahana", action: "Check" },
 ]
 
 export default function DashboardPage() {
@@ -42,7 +42,7 @@ export default function DashboardPage() {
   const [showPeriod, setShowPeriod] = useState(false)
   const [lastRefresh] = useState(() => {
     const now = new Date()
-    return now.toLocaleString("id-ID", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })
+    return now.toLocaleString("en-US", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })
   })
 
   const trendChartOptions: ApexCharts.ApexOptions = useMemo(() => ({
@@ -181,7 +181,7 @@ export default function DashboardPage() {
         </div>
         <div className="flex items-center gap-2 text-xs text-body">
           <RefreshCw className="h-3.5 w-3.5" />
-          Terakhir diperbarui: {lastRefresh}
+          Last updated: {lastRefresh}
         </div>
       </div>
 
@@ -239,22 +239,22 @@ export default function DashboardPage() {
           </div>
           <div className="space-y-4">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-body">Pesan Terkirim</span>
+              <span className="text-body">Messages Sent</span>
               <span className="font-bold text-black">1,247</span>
             </div>
             <div className="flex items-center justify-between text-sm">
-              <span className="text-body">Pesan Gagal</span>
+              <span className="text-body">Failed Messages</span>
               <span className="font-bold text-danger">23</span>
             </div>
             <div className="flex items-center justify-between text-sm">
-              <span className="text-body">Response Time Bot</span>
+              <span className="text-body">Bot Response Time</span>
               <div className="flex items-center gap-1">
                 <Clock className="h-3.5 w-3.5 text-body" />
                 <span className="font-bold text-black">1.2s</span>
               </div>
             </div>
             <div className="flex items-center justify-between text-sm">
-              <span className="text-body">Tingkat Keberhasilan</span>
+              <span className="text-body">Success Rate</span>
               <span className="font-bold text-black">98.2%</span>
             </div>
           </div>
@@ -263,7 +263,7 @@ export default function DashboardPage() {
         {/* Alert Panel */}
         <div className="xl:col-span-2 rounded-lg border border-stroke bg-white px-5 pb-5 pt-7.5 shadow-default sm:px-7.5">
           <div className="mb-4">
-            <h3 className="text-base font-semibold text-black">Perlu Tindakan</h3>
+            <h3 className="text-base font-semibold text-black">Needs Action</h3>
           </div>
           <div className="divide-y divide-stroke">
             {alerts.map((alert, i) => (
@@ -284,12 +284,12 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Match Rate per Wahana + Top Wahana by Revenue */}
+      {/* Match Rate per Unit + Top Units by Revenue */}
       <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-2">
         <div className="rounded-lg border border-stroke bg-white px-5 pb-5 pt-7.5 shadow-default sm:px-7.5">
           <div className="flex items-center justify-between mb-5">
-            <h3 className="text-lg font-semibold text-black">Match Rate per Wahana</h3>
-            <Link href="/orders" className="text-sm font-medium text-primary">Lihat semua</Link>
+            <h3 className="text-lg font-semibold text-black">Match Rate per Unit</h3>
+            <Link href="/orders" className="text-sm font-medium text-primary">See all</Link>
           </div>
           <div className="grid grid-cols-2 gap-4 items-center">
             <div className="h-64">
@@ -311,8 +311,8 @@ export default function DashboardPage() {
 
         <div className="rounded-lg border border-stroke bg-white px-5 pb-5 pt-7.5 shadow-default sm:px-7.5">
           <div className="flex items-center justify-between mb-5">
-            <h3 className="text-lg font-semibold text-black">Top Wahana by Revenue</h3>
-            <Link href="/orders" className="text-sm font-medium text-primary">Lihat semua</Link>
+            <h3 className="text-lg font-semibold text-black">Top Units by Revenue</h3>
+            <Link href="/orders" className="text-sm font-medium text-primary">See all</Link>
           </div>
           <div className="space-y-4 pt-6">
             {UNITS.map((u, i) => (

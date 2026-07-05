@@ -207,7 +207,7 @@ function OrderDetailDialog({ order, open, onClose }: { order: OrderItem; open: b
                   className="inline-flex items-center justify-center rounded border border-stroke px-6 py-2 text-sm font-medium hover:bg-gray-1"
                   onClick={onClose}
                 >
-                  Tutup
+                  Close
                 </button>
               </div>
             </div>
@@ -248,7 +248,7 @@ export default function ReconciliationDetailPage() {
         className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-body hover:text-black"
       >
         <ArrowLeft className="h-4 w-4" />
-        Kembali ke Reconciliation
+        Back to Reconciliation
       </Link>
 
       <div className="mb-6 rounded-lg border border-stroke bg-green-50">

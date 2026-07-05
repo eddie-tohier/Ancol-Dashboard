@@ -161,7 +161,7 @@ export default function SettingsPage() {
           <div className="border-b border-stroke px-5 py-3 ">
             <h3 className="font-medium text-black ">Role-Based Access Control</h3>
             <p className="mt-0.5 text-xs text-body">
-              Atur permission untuk setiap role. Perubahan hanya untuk tampilan saat ini (belum terhubung ke backend).
+              Manage permissions for each role. Changes affect the current view only (not yet connected to backend).
             </p>
           </div>
           <div className="p-5">
@@ -210,7 +210,7 @@ export default function SettingsPage() {
                 {rbacSaving ? "Saving..." : "Save RBAC"}
               </button>
               {rbacSaved && (
-                <span className="text-sm text-success">Perubahan disimpan (lokal)</span>
+                <span className="text-sm text-success">Changes saved (local)</span>
               )}
             </div>
           </div>

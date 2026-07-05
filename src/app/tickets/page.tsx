@@ -136,7 +136,7 @@ export default function TicketsPage() {
 
       <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
         <div className="rounded-lg border border-stroke bg-white bg-[url(/cube-bg_1.jpg)] bg-no-repeat bg-[right_bottom] bg-[length:auto_100%] px-5 py-4 shadow-default">
-          <p className="text-sm font-medium text-body">Total Ticket Terjual Hari Ini</p>
+          <p className="text-sm font-medium text-body">Total Tickets Sold Today</p>
           <p className="mt-1 text-2xl font-bold text-[#334155]">{tickets.length}</p>
         </div>
         <div className="rounded-lg border border-stroke bg-white bg-[url(/cube-bg_1.jpg)] bg-no-repeat bg-[right_bottom] bg-[length:auto_100%] px-5 py-4 shadow-default">
@@ -157,7 +157,7 @@ export default function TicketsPage() {
         <div className="flex items-center justify-between border-b border-stroke px-5 py-3">
           <div className="relative w-72">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-            <input placeholder="Cari ticket ID, order ID..." className="compact-input w-full !pl-10 pr-3" />
+            <input placeholder="Search ticket ID, order ID..." className="compact-input w-full !pl-10 pr-3" />
           </div>
           <span className="text-sm text-gray-500">{tickets.length} tickets</span>
         </div>
@@ -168,7 +168,7 @@ export default function TicketsPage() {
               <tr className="bg-gray-2 text-left">
                 <th className="min-w-[130px] xl:pl-11">Ticket ID</th>
                 <th className="min-w-[110px]">Order ID</th>
-                <th className="min-w-[120px]">Wahana</th>
+                <th className="min-w-[120px]">Unit</th>
                 <th className="min-w-[180px]">Ticket Type</th>
                 <th className="min-w-[150px]">Customer</th>
                 <th className="min-w-[90px]">Status</th>
@@ -262,8 +262,8 @@ export default function TicketsPage() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="border-b border-stroke px-6 py-4">
-              <h3 className="text-lg font-semibold text-black">Detail Tiket</h3>
-              <p className="text-sm text-body">Informasi lengkap tiket pelanggan</p>
+              <h3 className="text-lg font-semibold text-black">Ticket Detail</h3>
+              <p className="text-sm text-body">Complete customer ticket information</p>
             </div>
 
             <div className="p-6 space-y-5">
@@ -288,7 +288,7 @@ export default function TicketsPage() {
                   <p className="font-medium text-black">{selected.orderId}</p>
                 </div>
                 <div>
-                  <p className="text-gray-500">Tiket ID</p>
+                  <p className="text-gray-500">Ticket ID</p>
                   <p className="font-medium text-black font-semibold tracking-wider">{selected.id}</p>
                 </div>
                 <div>
@@ -304,7 +304,7 @@ export default function TicketsPage() {
                   <p className="font-medium text-black">{selected.customerPhone}</p>
                 </div>
                 <div>
-                  <p className="text-gray-500">Wahana</p>
+                  <p className="text-gray-500">Unit</p>
                   <p className="font-medium text-black">{getUnitName(selected.unitId)}</p>
                 </div>
                 <div>
@@ -330,11 +330,11 @@ export default function TicketsPage() {
                     </div>
                     <div className="flex items-center gap-2 text-gray-500">
                       <Clock className="h-3.5 w-3.5" />
-                      <span>Waktu: <span className="font-medium text-black">{selected.scanHistory.waktuDigunakan}</span></span>
+                      <span>Time: <span className="font-medium text-black">{selected.scanHistory.waktuDigunakan}</span></span>
                     </div>
                   </div>
                 ) : (
-                  <p className="text-sm text-gray-400 italic">Belum ada scan history</p>
+                  <p className="text-sm text-gray-400 italic">No scan history yet</p>
                 )}
               </div>
 
@@ -347,11 +347,11 @@ export default function TicketsPage() {
                   <div className="text-sm">
                     <div className="flex items-center gap-2 text-gray-500">
                       <Clock className="h-3.5 w-3.5" />
-                      <span>Tanggal Refund: <span className="font-medium text-black">{selected.refundDate}</span></span>
+                      <span>Refund Date: <span className="font-medium text-black">{selected.refundDate}</span></span>
                     </div>
                   </div>
                 ) : (
-                  <p className="text-sm text-gray-400 italic">Tidak ada refund</p>
+                  <p className="text-sm text-gray-400 italic">No refund</p>
                 )}
               </div>
 
@@ -360,7 +360,7 @@ export default function TicketsPage() {
                   onClick={() => setOpen(false)}
                   className="rounded border border-stroke px-6 py-2 text-sm font-medium hover:bg-gray-1"
                 >
-                  Tutup
+                  Close
                 </button>
               </div>
             </div>

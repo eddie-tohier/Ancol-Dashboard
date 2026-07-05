@@ -32,7 +32,7 @@ export default function LoginPage() {
     })
 
     if (result?.error) {
-      setError("Email atau password salah")
+      setError("Invalid email or password")
       setLoading(false)
     } else {
       router.push("/dashboard")
@@ -48,12 +48,12 @@ export default function LoginPage() {
 
         <div className="space-y-6 z-10 -mt-40">
           <h1 className="text-4xl font-extrabold text-white leading-tight font-satoshi">
-            Monitor Pembelian
+            Purchase Monitor
             <br />
-            <span style={{ color: "#05afb0" }}>Tiket Ancol</span> via WhatsApp
+            <span style={{ color: "#05afb0" }}>Ancol Tickets</span> via WhatsApp
           </h1>
           <p className="text-base text-gray-400 leading-relaxed max-w-md">
-            Dashboard terpusat untuk memantau transaksi pembelian tiket secara real-time melalui WhatsApp Business API.
+            Centralized dashboard to monitor ticket purchase transactions in real-time via WhatsApp Business API.
           </p>
         </div>
 
@@ -79,8 +79,8 @@ export default function LoginPage() {
           </div>
 
           <div className="mb-8">
-            <h2 className="text-2xl font-semibold text-black">Masuk</h2>
-            <p className="mt-1 text-sm text-body">Silakan masuk ke akun Ancol Connect Anda</p>
+            <h2 className="text-2xl font-semibold text-black">Sign In</h2>
+            <p className="mt-1 text-sm text-body">Sign in to your Ancol Connect account</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
@@ -113,7 +113,7 @@ export default function LoginPage() {
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
-                  placeholder="Masukkan password"
+                  placeholder="Enter your password"
                   className="compact-input w-full !pl-10 !pr-10"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -134,7 +134,7 @@ export default function LoginPage() {
 
             <div className="flex items-center justify-end">
               <a href="/forgot-password" className="text-sm text-primary hover:underline">
-                Lupa Password?
+                Forgot Password?
               </a>
             </div>
 
@@ -143,7 +143,7 @@ export default function LoginPage() {
               disabled={loading}
               className="w-full cursor-pointer rounded-md bg-primary px-4 py-2.5 font-medium text-white transition hover:bg-opacity-90 disabled:opacity-60"
             >
-              {loading ? "Memproses..." : "Masuk"}
+              {loading ? "Signing in..." : "Sign In"}
             </button>
           </form>
         </div>

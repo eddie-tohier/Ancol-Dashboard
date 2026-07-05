@@ -19,13 +19,13 @@ function ResetPasswordForm() {
     setError("")
 
     if (password !== passwordConfirm) {
-      setError("Konfirmasi password tidak cocok")
+      setError("Passwords do not match")
       setStatus("error")
       return
     }
 
     if (password.length < 8) {
-      setError("Password minimal 8 karakter")
+      setError("Password must be at least 8 characters")
       setStatus("error")
       return
     }
@@ -39,12 +39,12 @@ function ResetPasswordForm() {
 
       if (!res.ok) {
         const data = await res.json()
-        throw new Error(data.message || "Gagal mereset password")
+        throw new Error(data.message || "Failed to reset password")
       }
 
       setStatus("success")
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Terjadi kesalahan")
+      setError(err instanceof Error ? err.message : "An error occurred")
       setStatus("error")
     }
   }
@@ -54,11 +54,11 @@ function ResetPasswordForm() {
       <div className="p-5">
         <div className="flex flex-col items-center gap-3 rounded-md bg-danger/10 p-3 text-center text-sm text-danger">
           <AlertCircle className="h-6 w-6" />
-          <span>Link tidak valid</span>
+          <span>Invalid link</span>
         </div>
         <div className="mt-3 text-center">
           <a href="/forgot-password" className="text-sm text-primary hover:underline">
-            Minta link baru
+            Request new link
           </a>
         </div>
       </div>
@@ -71,7 +71,7 @@ function ResetPasswordForm() {
         <div className="space-y-3">
           <div className="flex flex-col items-center gap-2 rounded-md bg-success/10 p-3 text-center text-sm text-success">
             <CheckCircle className="h-6 w-6" />
-            <span>Password berhasil direset</span>
+            <span>Password reset successful</span>
           </div>
           <a href="/login">
             <button className="w-full cursor-pointer rounded-md border border-primary bg-primary px-4 py-2 font-medium text-white transition hover:bg-opacity-90">
@@ -88,12 +88,12 @@ function ResetPasswordForm() {
             </div>
           )}
           <div>
-            <label className="compact-label">Password Baru</label>
+            <label className="compact-label">New Password</label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <input
                 type="password"
-                placeholder="Minimal 8 karakter"
+                placeholder="At least 8 characters"
                 className="compact-input w-full !pl-10"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -103,12 +103,12 @@ function ResetPasswordForm() {
             </div>
           </div>
           <div>
-            <label className="compact-label">Konfirmasi Password</label>
+            <label className="compact-label">Confirm Password</label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <input
                 type="password"
-                placeholder="Masukkan ulang password"
+                placeholder="Re-enter password"
                 className="compact-input w-full !pl-10"
                 value={passwordConfirm}
                 onChange={(e) => setPasswordConfirm(e.target.value)}
@@ -121,7 +121,7 @@ function ResetPasswordForm() {
             disabled={status === "loading"}
             className="w-full cursor-pointer rounded-md border border-primary bg-primary px-4 py-2 font-medium text-white transition hover:bg-opacity-90 disabled:opacity-60"
           >
-            {status === "loading" ? "Memproses..." : "Reset Password"}
+            {status === "loading" ? "Processing..." : "Reset Password"}
           </button>
         </form>
       )}
@@ -139,7 +139,7 @@ export default function ResetPasswordPage() {
         <Suspense
           fallback={
             <div className="p-5">
-              <div className="text-center text-sm text-gray-500">Memuat...</div>
+              <div className="text-center text-sm text-gray-500">Loading...</div>
             </div>
           }
         >

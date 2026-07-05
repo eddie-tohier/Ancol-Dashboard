@@ -122,8 +122,8 @@ export default function ReconciliationPage() {
   }
 
   const monthNames = [
-    "Januari", "Februari", "Maret", "April", "Mei", "Juni",
-    "Juli", "Agustus", "September", "Oktober", "November", "Desember",
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December",
   ]
 
   const availDays = allSessions
@@ -178,7 +178,7 @@ export default function ReconciliationPage() {
                     </button>
                   </div>
                   <div className="grid grid-cols-7 gap-1 text-center text-xs font-medium text-body mb-2">
-                    {["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"].map((d) => (
+                    {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
                       <div key={d} className="py-1">{d}</div>
                     ))}
                   </div>
@@ -269,7 +269,7 @@ export default function ReconciliationPage() {
                   <td className="border-b border-[#eee] text-right">
                     {session.status === "FAILED" ? (
                       <button
-                        onClick={() => alert(`Fetch ulang data untuk ${session.id}...`)}
+                        onClick={() => alert(`Refetch data for ${session.id}...`)}
                         className="inline-flex items-center justify-center rounded border border-stroke px-3 py-1.5 text-sm font-medium hover:bg-gray-1"
                       >
                         <RefreshCw className="h-4 w-4 text-warning" />
@@ -287,7 +287,7 @@ export default function ReconciliationPage() {
               {filteredSessions.length === 0 && (
                 <tr>
                   <td colSpan={8} className="px-4 py-8 text-center text-sm text-body">
-                    Belum ada session
+                    No sessions yet
                   </td>
                 </tr>
               )}

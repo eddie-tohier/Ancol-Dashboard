@@ -45,7 +45,7 @@ export default function WahanaPage() {
 
       <div className="mb-4 flex items-center justify-between">
         <p className="text-sm font-medium text-black">
-          Daftar unit rekreasi Ancol &amp; status sinkronisasi tiket
+          Ancol recreation units &amp; ticket sync status
         </p>
         <button
           onClick={refreshAll}
@@ -63,7 +63,7 @@ export default function WahanaPage() {
             <thead>
               <tr className="bg-gray-2 text-left">
                 <th className="xl:pl-11">Unit ID</th>
-                <th className="min-w-[200px]">Nama Wahana</th>
+                <th className="min-w-[200px]">Unit Name</th>
                 <th className="min-w-[120px]">Status Sync</th>
                 <th className="min-w-[160px]">Last Sync</th>
                 <th className="text-center">Active Products</th>

@@ -85,7 +85,7 @@ export default function CustomersPage() {
           <div className="relative w-72">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <input
-              placeholder="Cari nama, phone, email..."
+              placeholder="Search name, phone, email..."
               className="compact-input w-full !pl-10 pr-3"
             />
           </div>
@@ -189,7 +189,7 @@ export default function CustomersPage() {
           >
             <div className="border-b border-stroke px-6.5 py-4 ">
               <h3 className="text-lg font-semibold text-black ">Customer Detail</h3>
-              <p className="text-sm text-body">Informasi lengkap pelanggan</p>
+              <p className="text-sm text-body">Complete customer information</p>
             </div>
             <div className="p-6.5">
               {selected && (
@@ -233,7 +233,7 @@ export default function CustomersPage() {
                   className="inline-flex items-center justify-center rounded border border-stroke px-6 py-2 text-sm font-medium hover:bg-gray-1"
                   onClick={() => setOpen(false)}
                 >
-                  Tutup
+                  Close
                 </button>
               </div>
             </div>

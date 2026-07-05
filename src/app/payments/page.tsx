@@ -114,11 +114,11 @@ export default function PaymentsPage() {
 
       <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-5">
         <div className="rounded-lg border border-stroke bg-white px-5 py-4 shadow-default">
-          <p className="text-sm font-medium text-body">Revenue Hari Ini</p>
+          <p className="text-sm font-medium text-body">Today's Revenue</p>
           <p className="mt-1 text-xl font-bold text-[#334155]">Rp {todayRevenue.toLocaleString("id-ID")}</p>
         </div>
         <div className="rounded-lg border border-stroke bg-white px-5 py-4 shadow-default">
-          <p className="text-sm font-medium text-body">Revenue Bulan Ini</p>
+          <p className="text-sm font-medium text-body">This Month's Revenue</p>
           <p className="mt-1 text-xl font-bold text-[#334155]">Rp {totalRevenue.toLocaleString("id-ID")}</p>
         </div>
         <div className="rounded-lg border border-stroke bg-white px-5 py-4 shadow-default">
@@ -160,7 +160,7 @@ export default function PaymentsPage() {
         <div className="flex items-center justify-between border-b border-stroke px-5 py-3">
           <div className="relative w-72">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-            <input placeholder="Cari payment ID, order ID..." className="compact-input w-full !pl-10 pr-3" />
+            <input placeholder="Search payment ID, order ID..." className="compact-input w-full !pl-10 pr-3" />
           </div>
           <div className="flex items-center gap-3">
             <select className="compact-input text-sm">
@@ -276,8 +276,8 @@ export default function PaymentsPage() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="border-b border-stroke px-6 py-4">
-              <h3 className="text-lg font-semibold text-black">Detail Payment</h3>
-              <p className="text-sm text-body">Informasi lengkap transaksi pembayaran</p>
+              <h3 className="text-lg font-semibold text-black">Payment Detail</h3>
+              <p className="text-sm text-body">Complete payment transaction information</p>
             </div>
 
             <div className="p-6 space-y-5">
@@ -341,7 +341,7 @@ export default function PaymentsPage() {
                   onClick={() => setOpen(false)}
                   className="rounded border border-stroke px-6 py-2 text-sm font-medium hover:bg-gray-1"
                 >
-                  Tutup
+                  Close
                 </button>
               </div>
             </div>

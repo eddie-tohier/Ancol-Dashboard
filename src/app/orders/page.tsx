@@ -235,7 +235,7 @@ function OrdersPageContent() {
             <div className="relative w-60">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <input
-                placeholder="Cari order ID, customer..."
+                placeholder="Search order ID, customer..."
                 className="compact-input w-full !pl-10 pr-3"
               />
             </div>
@@ -266,7 +266,7 @@ function OrdersPageContent() {
                     statusFilter === s ? "bg-primary text-white" : "text-body hover:text-primary"
                   }`}
                 >
-                  {s === "all" ? "Semua" : s}
+                  {s === "all" ? "All" : s}
                 </button>
               ))}
             </div>
@@ -297,7 +297,7 @@ function OrdersPageContent() {
                   unitFilter === "all" ? "bg-primary text-white" : "bg-gray-100 text-black hover:bg-gray-200"
                 }`}
               >
-                Semua
+                All
               </button>
               {UNITS.map((u) => (
                 <button
@@ -387,7 +387,7 @@ function OrdersPageContent() {
               {filteredOrders.length === 0 && (
                 <tr>
                   <td colSpan={10} className="px-4 py-8 text-center text-sm text-body">
-                    Tidak ada order untuk wahana ini
+                    No orders for this unit
                   </td>
                 </tr>
               )}
@@ -403,7 +403,7 @@ function OrdersPageContent() {
         {totalPages > 1 && (
           <div className="flex items-center justify-between border-t border-stroke px-5 py-3">
             <p className="text-sm text-body">
-              Menampilkan {(currentPage - 1) * pageSize + 1}-{Math.min(currentPage * pageSize, filteredOrders.length)} dari {filteredOrders.length} order
+              Showing {(currentPage - 1) * pageSize + 1}-{Math.min(currentPage * pageSize, filteredOrders.length)} of {filteredOrders.length} orders
             </p>
             <div className="flex items-center gap-1">
               <button
@@ -516,7 +516,7 @@ function OrdersPageContent() {
                         ))}
                       </div>
                     ) : (
-                      <p className="text-sm text-gray-500">Belum ada tiket</p>
+                      <p className="text-sm text-gray-500">No tickets yet</p>
                     )}
                   </div>
 
@@ -567,7 +567,7 @@ function OrdersPageContent() {
                   className="inline-flex items-center justify-center rounded border border-stroke px-6 py-2 text-sm font-medium hover:bg-gray-1"
                   onClick={() => setOpen(false)}
                 >
-                  Tutup
+                  Close
                 </button>
               </div>
             </div>

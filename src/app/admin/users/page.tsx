@@ -81,15 +81,15 @@ export default function AdminUsersPage() {
 
   function handleSave() {
     if (!formName.trim() || !formEmail.trim()) {
-      setFormError("Name dan Email wajib diisi")
+      setFormError("Name and Email are required")
       return
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formEmail)) {
-      setFormError("Format email tidak valid")
+      setFormError("Invalid email format")
       return
     }
     if (!editingUser && formPassword.length < 8) {
-      setFormError("Password minimal 8 karakter")
+      setFormError("Password must be at least 8 characters")
       return
     }
     if (editingUser) {
@@ -141,7 +141,7 @@ export default function AdminUsersPage() {
             className="inline-flex items-center justify-center gap-2 rounded bg-primary px-3 py-1.5 text-sm font-medium text-white hover:bg-opacity-90"
           >
             <Plus className="h-4 w-4" />
-            Tambah User
+            Add User
           </button>
         </div>
 
@@ -221,7 +221,7 @@ export default function AdminUsersPage() {
           >
             <div className="border-b border-stroke px-5 py-3 ">
               <h3 className="text-base font-semibold text-black ">
-                {editingUser ? "Edit User" : "Tambah User"}
+                {editingUser ? "Edit User" : "Add User"}
               </h3>
             </div>
             <div className="p-5">
@@ -232,7 +232,7 @@ export default function AdminUsersPage() {
                     className="compact-input w-full"
                     value={formName}
                     onChange={(e) => setFormName(e.target.value)}
-                    placeholder="Nama lengkap"
+                    placeholder="Full name"
                   />
                 </div>
                 <div>
@@ -252,7 +252,7 @@ export default function AdminUsersPage() {
                     className="compact-input w-full"
                     value={formPassword}
                     onChange={(e) => setFormPassword(e.target.value)}
-                    placeholder={editingUser ? "Kosongkan jika tidak diganti" : "Min. 8 karakter"}
+                    placeholder={editingUser ? "Leave blank if unchanged" : "Min. 8 characters"}
                   />
                 </div>
                 <div>
@@ -283,7 +283,7 @@ export default function AdminUsersPage() {
                     />
                   </button>
                 </div>
-                <p className="text-xs text-body -mt-1">{formStatus === "active" ? "Aktif" : "Non-aktif"}</p>
+                <p className="text-xs text-body -mt-1">{formStatus === "active" ? "Active" : "Inactive"}</p>
                 {formError && (
                   <div className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">
                     {formError}
@@ -295,13 +295,13 @@ export default function AdminUsersPage() {
                   className="inline-flex items-center justify-center rounded border border-stroke px-5 py-1.5 text-sm font-medium hover:bg-gray-1"
                   onClick={() => setFormOpen(false)}
                 >
-                  Batal
+                  Cancel
                 </button>
                 <button
                   className="inline-flex items-center justify-center rounded bg-primary px-5 py-1.5 text-sm font-medium text-white hover:bg-opacity-90"
                   onClick={handleSave}
                 >
-                  Simpan
+                  Save
                 </button>
               </div>
             </div>
@@ -319,9 +319,9 @@ export default function AdminUsersPage() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="border-b border-stroke px-5 py-3 ">
-              <h3 className="text-base font-semibold text-black ">Hapus User</h3>
+              <h3 className="text-base font-semibold text-black ">Delete User</h3>
               <p className="text-sm text-body">
-                Yakin ingin menghapus user <strong>{deletingUser?.name}</strong>? Tindakan ini tidak bisa dibatalkan.
+                Are you sure you want to delete user <strong>{deletingUser?.name}</strong>? This action cannot be undone.
               </p>
             </div>
             <div className="flex justify-end gap-3 p-5">
@@ -329,13 +329,13 @@ export default function AdminUsersPage() {
                 className="inline-flex items-center justify-center rounded border border-stroke px-6 py-2 text-sm font-medium hover:bg-gray-1"
                 onClick={() => setDeleteOpen(false)}
               >
-                Batal
+                Cancel
               </button>
               <button
                 className="inline-flex items-center justify-center rounded bg-danger px-6 py-2 text-sm font-medium text-white hover:bg-opacity-90"
                 onClick={handleDelete}
               >
-                Hapus
+                Delete
               </button>
             </div>
           </div>
