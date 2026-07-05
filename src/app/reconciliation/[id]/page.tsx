@@ -348,7 +348,7 @@ export default function ReconciliationDetailPage() {
                       </td>
                       <td className="border-b border-[#eee] ">{order.customer}</td>
                       <td className="border-b border-[#eee] ">
-                        <span className="inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-black">
+                        <span className="inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-xs text-black">
                           {getUnitName(order.unitId)}
                         </span>
                       </td>

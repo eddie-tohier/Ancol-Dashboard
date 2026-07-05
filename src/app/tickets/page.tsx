@@ -5,6 +5,7 @@ import DefaultLayout from "@/components/layout/DefaultLayout"
 import Breadcrumb from "@/components/layout/Breadcrumb"
 import { Search, ChevronLeft, ChevronRight, ScanLine, MapPin, Clock, Undo2, Eye } from "lucide-react"
 import { UNITS, getUnitName } from "@/lib/units"
+import StatCard from "@/components/ui/StatCard"
 
 type TicketStatus = "ACTIVE" | "USED" | "EXPIRED" | "REFUND"
 
@@ -135,22 +136,10 @@ export default function TicketsPage() {
       <Breadcrumb pageName="Tickets" />
 
       <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <div className="rounded-lg border border-stroke bg-white bg-[url(/cube-bg_1.jpg)] bg-no-repeat bg-[right_bottom] bg-[length:auto_100%] px-5 py-4 shadow-default">
-          <p className="text-sm font-medium text-body">Total Tickets Sold Today</p>
-          <p className="mt-1 text-2xl font-bold text-[#334155]">{tickets.length}</p>
-        </div>
-        <div className="rounded-lg border border-stroke bg-white bg-[url(/cube-bg_1.jpg)] bg-no-repeat bg-[right_bottom] bg-[length:auto_100%] px-5 py-4 shadow-default">
-          <p className="text-sm font-medium text-body">Pending Ticket</p>
-          <p className="mt-1 text-2xl font-bold text-success">{tickets.filter(t => t.status === "ACTIVE").length}</p>
-        </div>
-        <div className="rounded-lg border border-stroke bg-white bg-[url(/cube-bg_1.jpg)] bg-no-repeat bg-[right_bottom] bg-[length:auto_100%] px-5 py-4 shadow-default">
-          <p className="text-sm font-medium text-body">Used Ticket</p>
-          <p className="mt-1 text-2xl font-bold text-primary">{tickets.filter(t => t.status === "USED").length}</p>
-        </div>
-        <div className="rounded-lg border border-stroke bg-white bg-[url(/cube-bg_1.jpg)] bg-no-repeat bg-[right_bottom] bg-[length:auto_100%] px-5 py-4 shadow-default">
-          <p className="text-sm font-medium text-body">Expired Ticket</p>
-          <p className="mt-1 text-2xl font-bold text-danger">{tickets.filter(t => t.status === "EXPIRED" || t.status === "REFUND").length}</p>
-        </div>
+        <StatCard label="Total Tickets Sold Today" value={tickets.length} bgImage="/cube-bg_1.jpg" />
+        <StatCard label="Pending Ticket" value={tickets.filter(t => t.status === "ACTIVE").length} bgImage="/cube-bg_1.jpg" valueClassName="text-success" />
+        <StatCard label="Used Ticket" value={tickets.filter(t => t.status === "USED").length} bgImage="/cube-bg_1.jpg" valueClassName="text-primary" />
+        <StatCard label="Expired Ticket" value={tickets.filter(t => t.status === "EXPIRED" || t.status === "REFUND").length} bgImage="/cube-bg_1.jpg" valueClassName="text-danger" />
       </div>
 
       <div className="rounded-lg border border-stroke bg-white shadow-default">
@@ -186,7 +175,7 @@ export default function TicketsPage() {
                     <span className="text-black">{t.orderId}</span>
                   </td>
                   <td className="border-b border-[#eee]">
-                    <span className="inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-black">
+                    <span className="inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-xs text-black">
                       {getUnitName(t.unitId)}
                     </span>
                   </td>

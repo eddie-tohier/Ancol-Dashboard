@@ -6,7 +6,7 @@ import DefaultLayout from "@/components/layout/DefaultLayout"
 import Breadcrumb from "@/components/layout/Breadcrumb"
 import CardDataStats from "@/components/layout/CardDataStats"
 import dynamic from "next/dynamic"
-import { ShoppingCart, TrendingUp, AlertTriangle, ShieldAlert, Wallet, MessageCircle, Clock, RefreshCw, Wifi, ChevronDown, Calendar } from "lucide-react"
+import { ShoppingCart, TrendingUp, AlertTriangle, ShieldAlert, Wallet, MessageCircle, Clock, RefreshCw, Wifi, ChevronDown, Calendar, CheckCircle } from "lucide-react"
 import { UNITS } from "@/lib/units"
 
 const ReactApexChart = dynamic(() => import("react-apexcharts"), { ssr: false })
@@ -37,13 +37,31 @@ const alerts = [
   { label: "Sync Error — Atlantis", desc: "Sync failed 2 hours ago", link: "/wahana", action: "Check" },
 ]
 
+const fullAlerts = [
+  { label: "Mismatch Data", desc: "47 transactions don't match", link: "/reconciliation", action: "Review" },
+  { label: "Orphan Payment", desc: "3 payments without orders", link: "/payments", action: "Check" },
+  { label: "Sync Error — Dufan", desc: "Sync failed 30 minutes ago", link: "/wahana", action: "Check" },
+  { label: "Sync Error — Atlantis", desc: "Sync failed 2 hours ago", link: "/wahana", action: "Check" },
+  { label: "Sync Error — Sea World", desc: "Sync failed 45 minutes ago", link: "/wahana", action: "Check" },
+  { label: "Low Stock — Bahari", desc: "Tiket Reguler tersisa 12", link: "/wahana", action: "Restock" },
+  { label: "Pending Refund — IDR 450K", desc: "3 refund requests awaiting approval", link: "/orders", action: "Approve" },
+  { label: "Payment Gateway Down", desc: "Midtrans VA timeout 5 menit terakhir", link: "/payments", action: "Monitor" },
+  { label: "Unreconciled — Samudra", desc: "28 tiket belum direkonsiliasi sejak kemarin", link: "/reconciliation/samudra", action: "Reconcile" },
+  { label: "Ticket Expired — Bird Land", desc: "15 tiket expired belum di-refund", link: "/tickets", action: "Process" },
+  { label: "API Rate Limit — Dufan", desc: "Mendekati limit 80%", link: "/wahana", action: "Check" },
+  { label: "Duplicate Order — IDR 2.1M", desc: "2 order dengan amount sama, perlu diverifikasi", link: "/orders", action: "Verify" },
+]
+
 export default function DashboardPage() {
   const [period, setPeriod] = useState("month")
   const [showPeriod, setShowPeriod] = useState(false)
+  const [demoMode, setDemoMode] = useState<"normal" | "empty" | "full">("normal")
   const [lastRefresh] = useState(() => {
     const now = new Date()
     return now.toLocaleString("en-US", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })
   })
+
+  const displayAlerts = demoMode === "full" ? fullAlerts : demoMode === "empty" ? [] : alerts
 
   const trendChartOptions: ApexCharts.ApexOptions = useMemo(() => ({
     chart: { type: "line", toolbar: { show: false } },
@@ -237,23 +255,23 @@ export default function DashboardPage() {
               Online
             </span>
           </div>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between text-sm">
+          <div className="ml-7 divide-y divide-stroke">
+            <div className="flex items-center justify-between text-sm py-3 first:pt-0 last:pb-0">
               <span className="text-body">Messages Sent</span>
               <span className="font-bold text-black">1,247</span>
             </div>
-            <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center justify-between text-sm py-3 first:pt-0 last:pb-0">
               <span className="text-body">Failed Messages</span>
               <span className="font-bold text-danger">23</span>
             </div>
-            <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center justify-between text-sm py-3 first:pt-0 last:pb-0">
               <span className="text-body">Bot Response Time</span>
               <div className="flex items-center gap-1">
                 <Clock className="h-3.5 w-3.5 text-body" />
                 <span className="font-bold text-black">1.2s</span>
               </div>
             </div>
-            <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center justify-between text-sm py-3 first:pt-0 last:pb-0">
               <span className="text-body">Success Rate</span>
               <span className="font-bold text-black">98.2%</span>
             </div>
@@ -262,25 +280,40 @@ export default function DashboardPage() {
 
         {/* Alert Panel */}
         <div className="xl:col-span-2 rounded-lg border border-stroke bg-white px-5 pb-5 pt-7.5 shadow-default sm:px-7.5">
-          <div className="mb-4">
+          <div className="mb-4 flex items-center justify-between">
             <h3 className="text-base font-semibold text-black">Needs Action</h3>
+            <div className="flex items-center gap-1">
+              <button onClick={() => setDemoMode("normal")} className={`rounded px-2 py-1 text-xs font-medium ${demoMode === "normal" ? "bg-primary text-white" : "bg-gray-1 text-black hover:bg-gray-2"}`}>Normal</button>
+              <button onClick={() => setDemoMode("empty")} className={`rounded px-2 py-1 text-xs font-medium ${demoMode === "empty" ? "bg-primary text-white" : "bg-gray-1 text-black hover:bg-gray-2"}`}>Empty</button>
+              <button onClick={() => setDemoMode("full")} className={`rounded px-2 py-1 text-xs font-medium ${demoMode === "full" ? "bg-primary text-white" : "bg-gray-1 text-black hover:bg-gray-2"}`}>Full</button>
+            </div>
           </div>
-          <div className="divide-y divide-stroke">
-            {alerts.map((alert, i) => (
-              <div key={i} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-black">{alert.label}</p>
-                  <p className="text-xs text-body truncate">{alert.desc}</p>
-                </div>
-                <Link
-                  href={alert.link}
-                  className="shrink-0 rounded border border-stroke px-3 py-1 text-xs font-medium text-black hover:bg-gray-1"
-                >
-                  {alert.action}
-                </Link>
+          {displayAlerts.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-8 text-body">
+              <div className="mb-2 rounded-full bg-success/10 p-3">
+                <CheckCircle className="h-6 w-6 text-success" />
               </div>
-            ))}
-          </div>
+              <p className="text-sm font-medium">All Clear</p>
+              <p className="text-xs">No action needed at this time</p>
+            </div>
+          ) : (
+            <div className={`divide-y divide-stroke ${demoMode === "full" ? "max-h-80 overflow-y-auto" : ""}`}>
+              {displayAlerts.map((alert, i) => (
+                <div key={i} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-body">{alert.label}</p>
+                    <p className="text-xs text-body truncate">{alert.desc}</p>
+                  </div>
+                  <Link
+                    href={alert.link}
+                    className="shrink-0 rounded border border-stroke px-3 py-1 text-xs font-medium text-black hover:bg-gray-1"
+                  >
+                    {alert.action}
+                  </Link>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 

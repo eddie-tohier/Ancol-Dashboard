@@ -5,6 +5,7 @@ import DefaultLayout from "@/components/layout/DefaultLayout"
 import Breadcrumb from "@/components/layout/Breadcrumb"
 import dynamic from "next/dynamic"
 import { Search, ChevronLeft, ChevronRight, Wallet, CheckCircle, Eye } from "lucide-react"
+import StatCard from "@/components/ui/StatCard"
 
 const ReactApexChart = dynamic(() => import("react-apexcharts"), { ssr: false })
 
@@ -113,26 +114,11 @@ export default function PaymentsPage() {
       <Breadcrumb pageName="Payments" />
 
       <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-5">
-        <div className="rounded-lg border border-stroke bg-white px-5 py-4 shadow-default">
-          <p className="text-sm font-medium text-body">Today's Revenue</p>
-          <p className="mt-1 text-xl font-bold text-[#334155]">Rp {todayRevenue.toLocaleString("id-ID")}</p>
-        </div>
-        <div className="rounded-lg border border-stroke bg-white px-5 py-4 shadow-default">
-          <p className="text-sm font-medium text-body">This Month's Revenue</p>
-          <p className="mt-1 text-xl font-bold text-[#334155]">Rp {totalRevenue.toLocaleString("id-ID")}</p>
-        </div>
-        <div className="rounded-lg border border-stroke bg-white px-5 py-4 shadow-default">
-          <p className="text-sm font-medium text-body">Success Rate</p>
-          <p className="mt-1 text-xl font-bold text-success">{successRate}%</p>
-        </div>
-        <div className="rounded-lg border border-stroke bg-white px-5 py-4 shadow-default">
-          <p className="text-sm font-medium text-body">Failed Payment</p>
-          <p className="mt-1 text-xl font-bold text-danger">{payments.filter(p => p.status === "FAILED").length}</p>
-        </div>
-        <div className="rounded-lg border border-stroke bg-white px-5 py-4 shadow-default">
-          <p className="text-sm font-medium text-body">Pending Payment</p>
-          <p className="mt-1 text-xl font-bold text-warning">{payments.filter(p => p.status === "PENDING").length}</p>
-        </div>
+        <StatCard label="Today's Revenue" value={`Rp ${todayRevenue.toLocaleString("id-ID")}`} size="sm" />
+        <StatCard label="This Month's Revenue" value={`Rp ${totalRevenue.toLocaleString("id-ID")}`} size="sm" />
+        <StatCard label="Success Rate" value={`${successRate}%`} valueClassName="text-success" size="sm" />
+        <StatCard label="Failed Payment" value={payments.filter(p => p.status === "FAILED").length} valueClassName="text-danger" size="sm" />
+        <StatCard label="Pending Payment" value={payments.filter(p => p.status === "PENDING").length} valueClassName="text-warning" size="sm" />
       </div>
 
       <div className="mb-6">

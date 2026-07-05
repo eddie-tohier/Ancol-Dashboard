@@ -1,11 +1,18 @@
 "use client"
 
-import { useState, useEffect, Suspense } from "react"
+import { useState, useEffect, useRef, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import DefaultLayout from "@/components/layout/DefaultLayout"
 import Breadcrumb from "@/components/layout/Breadcrumb"
-import { Search, Filter, ChevronsUpDown, ShoppingCart, Wallet, CheckCircle, XCircle, Eye, Download, Calendar } from "lucide-react"
-import { UNITS, getUnitName } from "@/lib/units"
+import { Eye, Download, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react"
+import SearchInput from "@/components/ui/SearchInput"
+import Pagination from "@/components/ui/Pagination"
+import StatCard from "@/components/ui/StatCard"
+import { getUnitName } from "@/lib/units"
+import FilterSortDropdown from "@/components/filters/FilterSortDropdown"
+import DateRangeFilter from "@/components/filters/DateRangeFilter"
+import PaymentStatusFilter from "@/components/filters/PaymentStatusFilter"
+import FloatingFilterBadge from "@/components/filters/FloatingFilterBadge"
 
 type OrderStatus = "PAID" | "ISSUED" | "FAILED" | "PENDING"
 
@@ -126,7 +133,7 @@ const orders = generateOrders(25)
 
 const statusColor: Record<OrderStatus, string> = {
   PAID: "text-success border border-success",
-  ISSUED: "text-primary border border-primary",
+  ISSUED: "text-orange-600 border border-orange-600",
   FAILED: "text-danger border border-danger",
   PENDING: "text-warning border border-warning",
 }
@@ -140,50 +147,122 @@ function OrdersPageContent() {
   const [open, setOpen] = useState(false)
   const [unitFilter, setUnitFilter] = useState<string>("all")
   const [statusFilter, setStatusFilter] = useState<OrderStatus | "all">("all")
+  const [dateType, setDateType] = useState<"orderDate" | "visitDate">("orderDate")
   const [dateFrom, setDateFrom] = useState("")
   const [dateTo, setDateTo] = useState("")
-  const [filterOpen, setFilterOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
+  const [sortKey, setSortKey] = useState<string | null>(null)
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc")
+  const [filterValue, setFilterValue] = useState("unit_all")
+  const [dropdownOpen, setDropdownOpen] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
 
   useEffect(() => {
     const unit = searchParams.get("unit")
     if (unit && unitIds.includes(unit)) {
       /* eslint-disable-next-line react-hooks/set-state-in-effect */
       setUnitFilter(unit)
-      setFilterOpen(true)
+      setFilterValue(`unit_${unit}`)
     }
   }, [searchParams])
 
+  const availDates = [...new Set(orders.map((o) => o[dateType]))].sort()
+
   const filteredOrders = orders.filter((o) => {
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase()
+      if (!o.id.toLowerCase().includes(q) && !o.customer.name.toLowerCase().includes(q) && !o.customer.phone.includes(q)) return false
+    }
     if (unitFilter !== "all" && !o.items.some((it) => it.unitId === unitFilter)) return false
     if (statusFilter !== "all" && o.status !== statusFilter) return false
-    if (dateFrom && o.orderDate < dateFrom) return false
-    if (dateTo && o.orderDate > dateTo) return false
+    const d = o[dateType]
+    if (dateFrom && d < dateFrom) return false
+    if (dateTo && d > dateTo) return false
     return true
+  })
+
+  function handleSort(key: string) {
+    let newDir = "asc"
+    let newKey: string | null = key
+    if (sortKey === key) {
+      if (sortDir === "asc") { newDir = "desc"; newKey = key }
+      else { newKey = null; newDir = "asc" }
+    }
+    setSortKey(newKey)
+    setSortDir(newDir as "asc" | "desc")
+    if (newKey) {
+      const map: Record<string, string> = {
+        id_asc: "orderId_asc", id_desc: "orderId_desc",
+        customer_asc: "customer_asc", customer_desc: "customer_desc",
+        amount_desc: "amount_highest", amount_asc: "amount_lowest",
+        status_asc: "status_asc", status_desc: "status_desc",
+        payment_asc: "payment_asc", payment_desc: "payment_desc",
+        orderDate_desc: "orderDate_desc", orderDate_asc: "orderDate_asc",
+      }
+      const fv = map[`${newKey}_${newDir}`]
+      if (fv) setFilterValue(fv)
+    } else {
+      setFilterValue(unitFilter === "all" ? "unit_all" : `unit_${unitFilter}`)
+    }
+    setCurrentPage(1)
+  }
+
+  const sortedOrders = [...filteredOrders].sort((a, b) => {
+    const key = sortKey || "orderDate"
+    const dir = sortKey ? sortDir : "desc"
+    let aVal: string | number = "", bVal: string | number = ""
+    if (key === "id") { aVal = a.id; bVal = b.id }
+    else if (key === "customer") { aVal = a.customer.name; bVal = b.customer.name }
+    else if (key === "phone") { aVal = a.customer.phone; bVal = b.customer.phone }
+    else if (key === "amount") { aVal = a.amount; bVal = b.amount }
+    else if (key === "status") { aVal = a.status; bVal = b.status }
+    else if (key === "payment") { aVal = a.payment; bVal = b.payment }
+    else if (key === "orderDate") { aVal = a.orderDate; bVal = b.orderDate }
+    if (aVal < bVal) return dir === "asc" ? -1 : 1
+    if (aVal > bVal) return dir === "asc" ? 1 : -1
+    return 0
   })
 
   const pageSize = 10
   const totalPages = Math.ceil(filteredOrders.length / pageSize)
-  const paginatedOrders = filteredOrders.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+  const paginatedOrders = sortedOrders.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+
+  const activeFilterCount =
+    (statusFilter !== "all" ? 1 : 0) +
+    (unitFilter !== "all" ? 1 : 0) +
+    (dateFrom || dateTo ? 1 : 0) +
+    (searchQuery ? 1 : 0)
 
   const totalRevenue = filteredOrders.reduce((s, o) => s + o.amount, 0)
   const counts = { PAID: 0, ISSUED: 0, FAILED: 0, PENDING: 0 } as Record<OrderStatus, number>
   filteredOrders.forEach((o) => { counts[o.status]++ })
 
   function exportCSV() {
+    const dateLabel = dateType === "orderDate" ? "Order Date" : "Visit Date"
     const rows = filteredOrders.map((o) => [
       o.id,
       o.customer.name,
       o.customer.phone,
       o.customer.email,
-      o.orderDate,
-      o.visitDate,
+      dateType === "orderDate" ? o.orderDate : o.visitDate,
+      dateType === "orderDate" ? o.visitDate : o.orderDate,
       o.items.map((it) => `${it.product} x${it.qty}`).join("; "),
       currencyFormat(o.amount),
       o.status,
       o.payment,
     ])
-    const header = ["Order ID", "Customer", "No. WA", "Email", "Order Date", "Visit Date", "Items", "Amount", "Status", "Payment"]
+    const header = ["Order ID", "Customer", "No. WA", "Email", dateLabel, dateType === "orderDate" ? "Visit Date" : "Order Date", "Items", "Amount", "Status", "Payment"]
     const csv = [header.join(","), ...rows.map((r) => r.map((c) => `"${c}"`).join(","))].join("\n")
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" })
     const url = URL.createObjectURL(blob)
@@ -194,139 +273,169 @@ function OrdersPageContent() {
     URL.revokeObjectURL(url)
   }
 
+  function getFilterLabel(val: string): string {
+    if (val.startsWith("unit_")) {
+      const id = val.replace("unit_", "")
+      return id === "all" ? "All Units" : getUnitName(id)
+    }
+    if (val === "orderId_asc") return "Order ID (A-Z)"
+    if (val === "orderId_desc") return "Order ID (Z-A)"
+    if (val === "customer_asc") return "Customer (A-Z)"
+    if (val === "customer_desc") return "Customer (Z-A)"
+    if (val === "amount_highest") return "Amount (Highest)"
+    if (val === "amount_lowest") return "Amount (Lowest)"
+    if (val === "status_asc") return "Status (A-Z)"
+    if (val === "status_desc") return "Status (Z-A)"
+    if (val === "payment_asc") return "Payment (A-Z)"
+    if (val === "payment_desc") return "Payment (Z-A)"
+    if (val === "orderDate_desc") return "Order Date (Newest)"
+    if (val === "orderDate_asc") return "Order Date (Oldest)"
+    return "Filter"
+  }
+
+  function onFilterSelect(val: string) {
+    setFilterValue(val)
+    setDropdownOpen(false)
+    setCurrentPage(1)
+    if (val.startsWith("unit_")) {
+      const id = val.replace("unit_", "")
+      setUnitFilter(id)
+    } else if (val === "orderId_asc") { setSortKey("id"); setSortDir("asc") }
+    else if (val === "orderId_desc") { setSortKey("id"); setSortDir("desc") }
+    else if (val === "customer_asc") { setSortKey("customer"); setSortDir("asc") }
+    else if (val === "customer_desc") { setSortKey("customer"); setSortDir("desc") }
+    else if (val === "amount_highest") { setSortKey("amount"); setSortDir("desc") }
+    else if (val === "amount_lowest") { setSortKey("amount"); setSortDir("asc") }
+    else if (val === "status_asc") { setSortKey("status"); setSortDir("asc") }
+    else if (val === "status_desc") { setSortKey("status"); setSortDir("desc") }
+    else if (val === "payment_asc") { setSortKey("payment"); setSortDir("asc") }
+    else if (val === "payment_desc") { setSortKey("payment"); setSortDir("desc") }
+    else if (val === "orderDate_desc") { setSortKey("orderDate"); setSortDir("desc") }
+    else if (val === "orderDate_asc") { setSortKey("orderDate"); setSortDir("asc") }
+  }
+
   return (
     <DefaultLayout>
       <Breadcrumb pageName="Orders" />
 
       <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <div className="rounded-lg border border-stroke bg-white bg-[url(/cube-bg.jpg)] bg-no-repeat bg-[right_bottom] bg-[length:auto_100%] px-5 py-4 shadow-default">
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-medium text-body">Total Orders</p>
-            {/* <ShoppingCart className="h-8 w-8 text-gray-300" /> */}
+        <StatCard label="Total Revenue" value={currencyFormat(totalRevenue)} bgImage="/cube-bg_1.jpg" />
+        <StatCard label="Total Orders" value={filteredOrders.length} bgImage="/cube-bg.jpg" />
+        <StatCard label="Paid / Issued" value={counts.PAID + counts.ISSUED} bgImage="/cube-bg_2.jpg" valueClassName="text-success" />
+        <StatCard label="Failed / Pending" value={counts.FAILED + counts.PENDING} bgImage="/cube-bg_3.jpg" valueClassName="text-danger" />
+      </div>
+
+      {/* Filter Card */}
+      <div className="mb-4 rounded-lg border border-stroke bg-white px-5 py-4 shadow-default">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-4">
+            <FilterSortDropdown
+              filterValue={filterValue}
+              dropdownOpen={dropdownOpen}
+              setDropdownOpen={setDropdownOpen}
+              dropdownRef={dropdownRef}
+              onFilterSelect={onFilterSelect}
+              getFilterLabel={getFilterLabel}
+            />
+            <PaymentStatusFilter
+              statusFilter={statusFilter}
+              onStatusChange={(s) => { setStatusFilter(s); setCurrentPage(1) }}
+              statuses={statuses}
+            />
+            <DateRangeFilter
+              dateType={dateType}
+              onDateTypeChange={setDateType}
+              dateFrom={dateFrom}
+              dateTo={dateTo}
+              onDateFromChange={setDateFrom}
+              onDateToChange={setDateTo}
+              onClearDates={() => { setDateFrom(""); setDateTo("") }}
+              onChangePage={() => setCurrentPage(1)}
+              availDates={availDates}
+            />
           </div>
-          <p className="mt-1 text-2xl font-bold text-[#334155]">{filteredOrders.length}</p>
-        </div>
-        <div className="rounded-lg border border-stroke bg-white bg-[url(/cube-bg_1.jpg)] bg-no-repeat bg-[right_bottom] bg-[length:auto_100%] px-5 py-4 shadow-default">
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-medium text-body">Total Revenue</p>
-            {/* <Wallet className="h-8 w-8 text-gray-300" /> */}
-          </div>
-          <p className="mt-1 text-2xl font-bold text-[#334155]">{currencyFormat(totalRevenue)}</p>
-        </div>
-        <div className="rounded-lg border border-stroke bg-white bg-[url(/cube-bg_2.jpg)] bg-no-repeat bg-[right_bottom] bg-[length:auto_100%] px-5 py-4 shadow-default">
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-medium text-body">Paid / Issued</p>
-            {/* <CheckCircle className="h-8 w-8 text-success" /> */}
-          </div>
-          <p className="mt-1 text-2xl font-bold text-success">{counts.PAID + counts.ISSUED}</p>
-        </div>
-        <div className="rounded-lg border border-stroke bg-white bg-[url(/cube-bg_3.jpg)] bg-no-repeat bg-[right_bottom] bg-[length:auto_100%] px-5 py-4 shadow-default">
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-medium text-body">Failed / Pending</p>
-            {/* <XCircle className="h-8 w-8 text-danger" /> */}
-          </div>
-          <p className="mt-1 text-2xl font-bold text-danger">{counts.FAILED + counts.PENDING}</p>
         </div>
       </div>
 
+      <FloatingFilterBadge
+        activeFilterCount={activeFilterCount}
+        onClearAll={() => { setSearchQuery(""); setStatusFilter("all"); setUnitFilter("all"); setFilterValue("unit_all"); setSortKey(null); setDateFrom(""); setDateTo(""); setCurrentPage(1) }}
+      />
+
+      {/* Table Card */}
       <div className="mb-4 rounded-lg border border-stroke bg-white shadow-default">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-stroke px-5 py-3">
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="relative w-60">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-              <input
-                placeholder="Search order ID, customer..."
-                className="compact-input w-full !pl-10 pr-3"
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-body" />
-              <input
-                type="date"
-                value={dateFrom}
-                onChange={(e) => { setDateFrom(e.target.value); setCurrentPage(1) }}
-                className="compact-input w-36 !pl-3 text-sm"
-              />
-              <span className="text-body">-</span>
-              <input
-                type="date"
-                value={dateTo}
-                onChange={(e) => { setDateTo(e.target.value); setCurrentPage(1) }}
-                className="compact-input w-36 !pl-3 text-sm"
-              />
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="flex rounded-md border border-stroke p-0.5">
-              {(["all", ...statuses] as const).map((s) => (
-                <button
-                  key={s}
-                  onClick={() => { setStatusFilter(s); setCurrentPage(1) }}
-                  className={`px-2.5 py-1 text-xs font-medium rounded ${
-                    statusFilter === s ? "bg-primary text-white" : "text-body hover:text-primary"
-                  }`}
-                >
-                  {s === "all" ? "All" : s}
-                </button>
-              ))}
-            </div>
-            <button
-              onClick={() => setFilterOpen(!filterOpen)}
-              className="inline-flex items-center justify-center gap-2 rounded border border-stroke px-3 py-1.5 text-sm font-medium hover:bg-gray-1"
-            >
-              <Filter className="h-4 w-4" />
-              {unitFilter === "all" ? "Unit" : getUnitName(unitFilter)}
-              <ChevronsUpDown className="h-3.5 w-3.5" />
-            </button>
-            <button
-              onClick={exportCSV}
-              className="inline-flex items-center justify-center gap-2 rounded border border-stroke px-3 py-1.5 text-sm font-medium hover:bg-gray-1"
-            >
-              <Download className="h-4 w-4" />
-              Export
-            </button>
-          </div>
-        </div>
-
-        {filterOpen && (
-          <div className="border-b border-stroke bg-gray-50 px-5 py-3">
-            <div className="flex flex-wrap items-center gap-2">
+          <div className="flex rounded-md border border-stroke p-0.5">
+            {(["all", ...unitIds] as const).map((uid) => (
               <button
-                onClick={() => { setUnitFilter("all"); setCurrentPage(1) }}
-                className={`rounded-full px-3 py-1.5 text-xs font-medium ${
-                  unitFilter === "all" ? "bg-primary text-white" : "bg-gray-100 text-black hover:bg-gray-200"
-                }`}
+                key={uid}
+                onClick={() => { setUnitFilter(uid); setFilterValue(`unit_${uid}`); setCurrentPage(1) }}
+                className={`px-2.5 py-1.5 text-xs rounded ${
+                   unitFilter === uid ? "bg-primary text-white" : "text-body hover:text-primary"
+                 }`}
               >
-                All
+                {uid === "all" ? "All" : getUnitName(uid)}
               </button>
-              {UNITS.map((u) => (
-                <button
-                  key={u.id}
-                  onClick={() => { setUnitFilter(u.id); setCurrentPage(1) }}
-                  className={`rounded-full px-3 py-1.5 text-xs font-medium ${
-                    unitFilter === u.id ? "bg-primary text-white" : "bg-gray-100 text-black hover:bg-gray-200"
-                  }`}
-                >
-                  {u.name}
-                </button>
-              ))}
-            </div>
+            ))}
           </div>
-        )}
-
+          <SearchInput
+            value={searchQuery}
+            onChange={(v) => { setSearchQuery(v); setCurrentPage(1) }}
+            onClear={() => setCurrentPage(1)}
+            placeholder="Search order ID, customer..."
+            className="ml-auto"
+          />
+          <button
+            onClick={exportCSV}
+            className="inline-flex items-center justify-center gap-2 rounded border border-stroke px-3 py-1.5 text-sm font-medium hover:bg-gray-1"
+          >
+            <Download className="h-4 w-4" />
+            Export
+          </button>
+        </div>
         <div className="max-w-full overflow-x-auto">
           <table className="compact-table w-full table-auto">
             <thead>
               <tr className="bg-gray-2 text-left">
-                <th className="min-w-[110px] xl:pl-11">Order ID</th>
-                <th className="min-w-[140px]">Customer</th>
+                <th className="min-w-[110px] xl:pl-11 cursor-pointer select-none whitespace-nowrap" onClick={() => handleSort("id")}>
+                  <span className="inline-flex items-center gap-1">
+                    Order ID
+                    {sortKey === "id" ? (sortDir === "asc" ? <ArrowUp className="h-3.5 w-3.5 text-orange-600" /> : <ArrowDown className="h-3.5 w-3.5 text-orange-600" />) : <ArrowUpDown className="h-3.5 w-3.5 text-gray-300" />}
+                  </span>
+                </th>
+                <th className="min-w-[140px] cursor-pointer select-none whitespace-nowrap" onClick={() => handleSort("customer")}>
+                  <span className="inline-flex items-center gap-1">
+                    Customer
+                    {sortKey === "customer" ? (sortDir === "asc" ? <ArrowUp className="h-3.5 w-3.5 text-orange-600" /> : <ArrowDown className="h-3.5 w-3.5 text-orange-600" />) : <ArrowUpDown className="h-3.5 w-3.5 text-gray-300" />}
+                  </span>
+                </th>
                 <th className="min-w-[130px]">No. WA</th>
-                <th className="min-w-[120px]">Order Date</th>
-                <th className="min-w-[120px]">Visit Date</th>
                 <th className="min-w-[150px]">Unit</th>
-                <th className="min-w-[120px]">Amount</th>
-                <th className="min-w-[100px]">Status</th>
-                <th className="min-w-[120px]">Payment</th>
+                <th className="min-w-[120px] cursor-pointer select-none whitespace-nowrap" onClick={() => handleSort("amount")}>
+                  <span className="inline-flex items-center gap-1">
+                    Amount
+                    {sortKey === "amount" ? (sortDir === "asc" ? <ArrowUp className="h-3.5 w-3.5 text-orange-600" /> : <ArrowDown className="h-3.5 w-3.5 text-orange-600" />) : <ArrowUpDown className="h-3.5 w-3.5 text-gray-300" />}
+                  </span>
+                </th>
+                <th className="min-w-[100px] cursor-pointer select-none whitespace-nowrap" onClick={() => handleSort("status")}>
+                  <span className="inline-flex items-center gap-1">
+                    Status
+                    {sortKey === "status" ? (sortDir === "asc" ? <ArrowUp className="h-3.5 w-3.5 text-orange-600" /> : <ArrowDown className="h-3.5 w-3.5 text-orange-600" />) : <ArrowUpDown className="h-3.5 w-3.5 text-gray-300" />}
+                  </span>
+                </th>
+                <th className="min-w-[120px] cursor-pointer select-none whitespace-nowrap" onClick={() => handleSort("payment")}>
+                  <span className="inline-flex items-center gap-1">
+                    Payment
+                    {sortKey === "payment" ? (sortDir === "asc" ? <ArrowUp className="h-3.5 w-3.5 text-orange-600" /> : <ArrowDown className="h-3.5 w-3.5 text-orange-600" />) : <ArrowUpDown className="h-3.5 w-3.5 text-gray-300" />}
+                  </span>
+                </th>
+                <th className="min-w-[120px] cursor-pointer select-none whitespace-nowrap" onClick={() => handleSort("orderDate")}>
+                  <span className="inline-flex items-center gap-1">
+                    Order Date
+                    {sortKey === "orderDate" ? (sortDir === "asc" ? <ArrowUp className="h-3.5 w-3.5 text-orange-600" /> : <ArrowDown className="h-3.5 w-3.5 text-orange-600" />) : <ArrowUpDown className="h-3.5 w-3.5 text-gray-300" />}
+                  </span>
+                </th>
+                <th className="min-w-[120px] whitespace-nowrap">Visit Date</th>
                 <th className="text-right">Action</th>
               </tr>
             </thead>
@@ -345,15 +454,9 @@ function OrdersPageContent() {
                       <span className="text-black">{order.customer.phone}</span>
                     </td>
                     <td className="border-b border-[#eee]">
-                      <span className="text-black">{order.orderDate}</span>
-                    </td>
-                    <td className="border-b border-[#eee]">
-                      <span className="text-black">{order.visitDate}</span>
-                    </td>
-                    <td className="border-b border-[#eee]">
                       <div className="flex flex-wrap gap-1">
                         {orderUnits.map((uid) => (
-                          <span key={uid} className="inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-black">
+                          <span key={uid} className="inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-xs text-black">
                             {getUnitName(uid)}
                           </span>
                         ))}
@@ -369,6 +472,12 @@ function OrdersPageContent() {
                     </td>
                     <td className="border-b border-[#eee]">
                       <span className="text-black">{order.payment}</span>
+                    </td>
+                    <td className="border-b border-[#eee]">
+                      <span className="text-black">{order.orderDate}</span>
+                    </td>
+                    <td className="border-b border-[#eee]">
+                      <span className="text-black">{order.visitDate}</span>
                     </td>
                     <td className="border-b border-[#eee] text-right">
                       <button
@@ -392,48 +501,16 @@ function OrdersPageContent() {
                 </tr>
               )}
             </tbody>
-            <tfoot>
-              <tr>
-                <td colSpan={99} />
-              </tr>
-            </tfoot>
           </table>
         </div>
 
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between border-t border-stroke px-5 py-3">
-            <p className="text-sm text-body">
-              Showing {(currentPage - 1) * pageSize + 1}-{Math.min(currentPage * pageSize, filteredOrders.length)} of {filteredOrders.length} orders
-            </p>
-            <div className="flex items-center gap-1">
-              <button
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                className="inline-flex items-center rounded border border-stroke px-3 py-1.5 text-sm font-medium disabled:opacity-40 hover:bg-gray-1"
-              >
-                Prev
-              </button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((pg) => (
-                <button
-                  key={pg}
-                  onClick={() => setCurrentPage(pg)}
-                  className={`inline-flex h-8 w-8 items-center justify-center rounded text-sm font-medium ${
-                    pg === currentPage ? "bg-primary text-white" : "border border-stroke hover:bg-gray-1"
-                  }`}
-                >
-                  {pg}
-                </button>
-              ))}
-              <button
-                disabled={currentPage === totalPages}
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                className="inline-flex items-center rounded border border-stroke px-3 py-1.5 text-sm font-medium disabled:opacity-40 hover:bg-gray-1"
-              >
-                Next
-              </button>
-            </div>
-          </div>
-        )}
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={filteredOrders.length}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+        />
       </div>
 
       {open && (
@@ -454,7 +531,7 @@ function OrdersPageContent() {
             <div className="p-6.5">
               {selected && (
                 <div className="space-y-6">
-                  <div className="grid grid-cols-2 gap-4 rounded-lg bg-gray-50 p-4">
+                  <div className="grid grid-cols-3 gap-4 rounded-lg bg-gray-50 p-4">
                     <div>
                       <p className="text-xs text-gray-500">Customer</p>
                       <p className="font-medium text-black">{selected.customer.name}</p>
@@ -471,6 +548,14 @@ function OrdersPageContent() {
                       <p className="text-xs text-gray-500">Order ID</p>
                       <p className="font-mono font-medium text-black">{selected.id}</p>
                     </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Order Date</p>
+                      <p className="font-medium text-black">{selected.orderDate}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Visit Date</p>
+                      <p className="font-medium text-black">{selected.visitDate}</p>
+                    </div>
                   </div>
 
                   <div>
@@ -480,7 +565,7 @@ function OrdersPageContent() {
                         <div key={i} className="flex items-center justify-between px-4 py-2.5">
                           <div className="flex items-center gap-2">
                             <span className="text-black">{item.product}</span>
-                            <span className="inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-black">
+                            <span className="inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-xs text-black">
                               {getUnitName(item.unitId)}
                             </span>
 
