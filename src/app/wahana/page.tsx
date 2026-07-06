@@ -3,35 +3,19 @@
 import { useState } from "react"
 import DefaultLayout from "@/components/layout/DefaultLayout"
 import Breadcrumb from "@/components/layout/Breadcrumb"
-import { UNITS } from "@/lib/units"
 import { Ticket, RefreshCw, CheckCircle, Clock, AlertCircle } from "lucide-react"
+import { getUnitStatuses } from "@/lib/data/wahana"
 
-interface UnitStatus {
-  id: string
-  name: string
-  lastSync: string
-  syncStatus: "synced" | "syncing" | "error"
-  activeProducts: number
-  ticketsIssued: number
-}
+const initialStatuses = getUnitStatuses()
 
-const initialStatuses: UnitStatus[] = UNITS.map((u, i) => ({
-  id: u.id,
-  name: u.name,
-  lastSync: ["2026-07-03 14:30", "2026-07-03 14:25", "2026-07-03 14:20", "2026-07-03 14:15", "2026-07-03 14:10", "2026-07-03 14:05"][i] || "-",
-  syncStatus: i === 1 ? "syncing" : i === 5 ? "error" : "synced",
-  activeProducts: [12, 8, 6, 10, 5, 7][i] || 0,
-  ticketsIssued: [342, 198, 124, 256, 89, 67][i] || 0,
-}))
-
-const statusConfig = {
+const statusConfig: Record<string, { label: string; color: string; bg: string; icon: React.ElementType }> = {
   synced: { label: "Synced", color: "text-success", bg: "border border-success", icon: CheckCircle },
   syncing: { label: "Syncing", color: "text-primary", bg: "border border-primary", icon: Clock },
   error: { label: "Error", color: "text-danger", bg: "border border-danger", icon: AlertCircle },
 }
 
 export default function WahanaPage() {
-  const [units] = useState<UnitStatus[]>(initialStatuses)
+  const [units] = useState(initialStatuses)
   const [refreshing, setRefreshing] = useState(false)
 
   function refreshAll() {

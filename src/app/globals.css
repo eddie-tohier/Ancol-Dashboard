@@ -298,3 +298,10 @@ body {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Badge pills — border opacity 25% globally */
+.inline-flex.rounded-full[class*="border"] {
+  border-color: color-mix(in srgb, currentColor 25%, transparent);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}

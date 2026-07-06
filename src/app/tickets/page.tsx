@@ -3,104 +3,23 @@
 import { useState, useMemo } from "react"
 import DefaultLayout from "@/components/layout/DefaultLayout"
 import Breadcrumb from "@/components/layout/Breadcrumb"
-import { Search, ChevronLeft, ChevronRight, ScanLine, MapPin, Clock, Undo2, Eye } from "lucide-react"
-import { UNITS, getUnitName } from "@/lib/units"
+import { Search, Eye } from "lucide-react"
+import { getUnitName } from "@/lib/units"
 import StatCard from "@/components/ui/StatCard"
+import Pagination from "@/components/ui/Pagination"
+import { getTickets } from "@/lib/data"
+import type { Ticket } from "@/lib/data"
 
-type TicketStatus = "ACTIVE" | "USED" | "EXPIRED" | "REFUND"
+const tickets = getTickets().data
 
-interface ScanHistory {
-  deviceScan: string
-  gateMasuk: string
-  waktuDigunakan: string
-}
-
-interface Ticket {
-  id: string
-  orderId: string
-  unitId: string
-  ticketType: string
-  customer: string
-  customerEmail: string
-  customerPhone: string
-  status: TicketStatus
-  validUntil: string
-  scanHistory: ScanHistory | null
-  refundDate: string | null
-}
-
-const ticketTypes = [
-  "Dufan Regular Weekday", "Dufan Annual Pass", "Dufan Express",
-  "Sea World Reguler", "Sea World VIP",
-  "Samudra Reguler", "Samudra Fast Track",
-  "Atlantis All Ride", "Atlantis Periode", "Atlantis VIP",
-  "Pintu Gerahim Ancol", "Ancol Taman Impian Pass",
-  "Bird Land Reguler", "Bird Land VIP",
-]
-
-const customerData = [
-  { name: "Budi Santoso", email: "budi@email.com", phone: "081234567890" },
-  { name: "Siti Rahmawati", email: "siti@email.com", phone: "081298765432" },
-  { name: "Ahmad Hidayat", email: "ahmad@email.com", phone: "087812345678" },
-  { name: "Dewi Lestari", email: "dewi@email.com", phone: "082134567890" },
-  { name: "Rudi Hartono", email: "rudi@email.com", phone: "085612345678" },
-  { name: "Nina Wijaya", email: "nina@email.com", phone: "081112223334" },
-  { name: "Hendra Gunawan", email: "hendra@email.com", phone: "087765432109" },
-  { name: "Maya Sari", email: "maya@email.com", phone: "082298765432" },
-  { name: "Agus Wijaya", email: "agus@email.com", phone: "081334455667" },
-  { name: "Rina Amelia", email: "rina@email.com", phone: "085598765432" },
-  { name: "Bayu Saputra", email: "bayu@email.com", phone: "087711223344" },
-  { name: "Fitri Handayani", email: "fitri@email.com", phone: "082176543210" },
-  { name: "Dimas Prayoga", email: "dimas@email.com", phone: "081245678901" },
-  { name: "Putri Ayu", email: "putri@email.com", phone: "085634567890" },
-  { name: "Adi Susanto", email: "adi@email.com", phone: "087898765432" },
-]
-
-const deviceScans = ["Scanner-01 (Gerbang Utama)", "Scanner-03 (Gerbang Timur)", "Scanner-05 (Gerbang Barat)"]
-const gates = ["Gate A", "Gate B", "Gate C", "Gate VIP"]
-
-function randomItem<T>(arr: T[]): T {
-  return arr[Math.floor(Math.random() * arr.length)]
-}
-
-function generateTickets(count: number): Ticket[] {
-  const tickets: Ticket[] = []
-  for (let i = 1; i <= count; i++) {
-    const statuses: TicketStatus[] = ["ACTIVE", "USED", "EXPIRED", "REFUND"]
-    const day = Math.floor(Math.random() * 30) + 1
-    const status = randomItem(statuses)
-    const cust = randomItem(customerData)
-    tickets.push({
-      id: `TKT-${String(i).padStart(5, "0")}`,
-      orderId: `ORD-${String(Math.floor(Math.random() * 25) + 1).padStart(3, "0")}`,
-      unitId: randomItem(UNITS).id,
-      ticketType: randomItem(ticketTypes),
-      customer: cust.name,
-      customerEmail: cust.email,
-      customerPhone: cust.phone,
-      status,
-      validUntil: `2026-07-${String(Math.min(day + 30, 31)).padStart(2, "0")}`,
-      scanHistory: status === "USED" ? {
-        deviceScan: randomItem(deviceScans),
-        gateMasuk: randomItem(gates),
-        waktuDigunakan: `2026-07-${String(day).padStart(2, "0")} 08:${String(Math.floor(Math.random() * 60)).padStart(2, "0")}`,
-      } : null,
-      refundDate: status === "REFUND" ? `2026-07-${String(Math.floor(Math.random() * 15) + 1).padStart(2, "0")}` : null,
-    })
-  }
-  return tickets
-}
-
-const tickets = generateTickets(35)
-
-const statusColor: Record<TicketStatus, string> = {
+const statusColor: Record<string, string> = {
   ACTIVE: "text-success border-success",
-  USED: "text-primary border-primary",
+  USED: "text-gray-400 border-gray-400",
   EXPIRED: "text-danger border-danger",
   REFUND: "text-warning border-warning",
 }
 
-const statusLabel: Record<TicketStatus, string> = {
+const statusLabel: Record<string, string> = {
   ACTIVE: "Active",
   USED: "Used",
   EXPIRED: "Expired",
@@ -183,7 +102,7 @@ export default function TicketsPage() {
                     <span className="text-black">{t.ticketType}</span>
                   </td>
                   <td className="border-b border-[#eee]">
-                    <span className="text-black">{t.customer}</span>
+                    <span className="text-black">{t.customerName}</span>
                   </td>
                   <td className="border-b border-[#eee]">
                     <span className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-medium ${statusColor[t.status]}`}>
@@ -207,38 +126,14 @@ export default function TicketsPage() {
           </table>
         </div>
 
-        <div className="flex items-center justify-between border-t border-stroke px-5 py-3">
-          <p className="text-sm text-gray-500">
-            Showing {(currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, tickets.length)} of {tickets.length}
-          </p>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-              className="inline-flex items-center justify-center rounded border border-stroke px-3 py-1.5 text-sm font-medium hover:bg-gray-1 disabled:opacity-40"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-              <button
-                key={page}
-                onClick={() => setCurrentPage(page)}
-                className={`inline-flex h-8 w-8 items-center justify-center rounded text-sm font-medium ${
-                  page === currentPage ? "bg-primary text-white" : "border border-stroke hover:bg-gray-1"
-                }`}
-              >
-                {page}
-              </button>
-            ))}
-            <button
-              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
-              className="inline-flex items-center justify-center rounded border border-stroke px-3 py-1.5 text-sm font-medium hover:bg-gray-1 disabled:opacity-40"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={tickets.length}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          label="tickets"
+        />
       </div>
 
       {open && selected && (
@@ -270,7 +165,7 @@ export default function TicketsPage() {
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <p className="text-gray-500">Customer</p>
-                  <p className="font-medium text-black">{selected.customer}</p>
+                  <p className="font-medium text-black">{selected.customerName}</p>
                 </div>
                 <div>
                   <p className="text-gray-500">Order ID</p>
@@ -302,47 +197,14 @@ export default function TicketsPage() {
                 </div>
               </div>
 
-              <div className="border-t border-stroke pt-4">
-                <h4 className="text-sm font-semibold text-black mb-3 flex items-center gap-1.5">
-                  <ScanLine className="h-4 w-4 text-primary" />
-                  History Scan
-                </h4>
-                {selected.scanHistory ? (
-                  <div className="space-y-2 text-sm">
-                    <div className="flex items-center gap-2 text-gray-500">
-                      <MapPin className="h-3.5 w-3.5" />
-                      <span>Device: <span className="font-medium text-black">{selected.scanHistory.deviceScan}</span></span>
-                    </div>
-                    <div className="flex items-center gap-2 text-gray-500">
-                      <ScanLine className="h-3.5 w-3.5" />
-                      <span>Gate: <span className="font-medium text-black">{selected.scanHistory.gateMasuk}</span></span>
-                    </div>
-                    <div className="flex items-center gap-2 text-gray-500">
-                      <Clock className="h-3.5 w-3.5" />
-                      <span>Time: <span className="font-medium text-black">{selected.scanHistory.waktuDigunakan}</span></span>
-                    </div>
-                  </div>
-                ) : (
-                  <p className="text-sm text-gray-400 italic">No scan history yet</p>
-                )}
-              </div>
-
-              <div className="border-t border-stroke pt-4">
-                <h4 className="text-sm font-semibold text-black mb-3 flex items-center gap-1.5">
-                  <Undo2 className="h-4 w-4 text-warning" />
-                  Refund History
-                </h4>
-                {selected.refundDate ? (
-                  <div className="text-sm">
-                    <div className="flex items-center gap-2 text-gray-500">
-                      <Clock className="h-3.5 w-3.5" />
-                      <span>Refund Date: <span className="font-medium text-black">{selected.refundDate}</span></span>
-                    </div>
-                  </div>
-                ) : (
-                  <p className="text-sm text-gray-400 italic">No refund</p>
-                )}
-              </div>
+              {selected.status === "USED" && selected.usedAt && (
+                <div className="border-t border-stroke pt-4">
+                  <h4 className="text-sm font-semibold text-black mb-3">
+                    Used At
+                  </h4>
+                  <p className="text-sm font-medium text-black">{selected.usedAt}</p>
+                </div>
+              )}
 
               <div className="flex justify-end gap-3 pt-2">
                 <button

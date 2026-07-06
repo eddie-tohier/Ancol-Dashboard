@@ -88,7 +88,7 @@ export default function DateRangeFilter({
     return false
   }
 
-  function setQuickFilter(type: "today" | "week" | "month") {
+  function setQuickFilter(type: "today" | "week" | "month" | "last3months") {
     const d = new Date()
     if (type === "today") {
       onDateFromChange(todayStr)
@@ -106,6 +106,11 @@ export default function DateRangeFilter({
       const last = new Date(d.getFullYear(), d.getMonth() + 1, 0)
       onDateFromChange(first.toISOString().slice(0, 10))
       onDateToChange(last.toISOString().slice(0, 10))
+    } else if (type === "last3months") {
+      const threeMonthsAgo = new Date(d)
+      threeMonthsAgo.setMonth(d.getMonth() - 3)
+      onDateFromChange(threeMonthsAgo.toISOString().slice(0, 10))
+      onDateToChange(todayStr)
     }
     onChangePage()
   }
@@ -131,7 +136,7 @@ export default function DateRangeFilter({
         <label className="mb-1 block text-xs font-medium text-body">Date Range</label>
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex rounded-md border border-stroke p-0.5">
-            {(["today", "week", "month"] as const).map((q) => (
+            {(["today", "week", "month", "last3months"] as const).map((q) => (
               <button
                 key={q}
                 onClick={() => setQuickFilter(q)}
@@ -141,7 +146,7 @@ export default function DateRangeFilter({
                     : "text-body hover:text-primary"
                 }`}
               >
-                {q === "today" ? "Today" : q === "week" ? "This Week" : "This Month"}
+                {q === "today" ? "Today" : q === "week" ? "This Week" : q === "month" ? "This Month" : "Last 3 Months"}
               </button>
             ))}
           </div>

@@ -8,6 +8,7 @@ import CardDataStats from "@/components/layout/CardDataStats"
 import dynamic from "next/dynamic"
 import { ShoppingCart, TrendingUp, AlertTriangle, ShieldAlert, Wallet, MessageCircle, Clock, RefreshCw, Wifi, ChevronDown, Calendar, CheckCircle } from "lucide-react"
 import { UNITS } from "@/lib/units"
+import { getDashboardStats, getTrendData, getMatchRateTrend } from "@/lib/data"
 
 const ReactApexChart = dynamic(() => import("react-apexcharts"), { ssr: false })
 
@@ -15,27 +16,11 @@ const periods = [
   { label: "Today", value: "today" },
   { label: "This Week", value: "week" },
   { label: "This Month", value: "month" },
+  { label: "Last 3 Months", value: "last3months" },
   { label: "This Year", value: "year" },
 ]
 
 const chartColors = ["#008FFB", "#00E396", "#FEB019", "#FF4560", "#775DD0", "#00B4D8"]
-
-const unitRates: Record<string, number> = { dfn: 98.5, swa: 96.2, ods: 93.1, awa: 82.5, pgu: 95.8, jbl: 97.3 }
-const unitVisitors: Record<string, number> = { dfn: 28450, swa: 12380, ods: 8970, awa: 15620, pgu: 42350, jbl: 6750 }
-
-const rates = Object.values(unitRates)
-const totalOrders = 1234
-const overallMatchRate = Number((rates.reduce((a, b) => a + b, 0) / rates.length).toFixed(1))
-const totalMismatch = Math.round(totalOrders * (100 - overallMatchRate) / 100)
-const orphanPayments = 3
-const totalRevenue = 185000000
-
-const alerts = [
-  { label: "Mismatch Data", desc: `${totalMismatch} transactions don't match`, link: "/reconciliation", action: "Review" },
-  { label: "Orphan Payment", desc: `${orphanPayments} payments without orders`, link: "/payments", action: "Check" },
-  { label: "Sync Error — Dufan", desc: "Sync failed 30 minutes ago", link: "/wahana", action: "Check" },
-  { label: "Sync Error — Atlantis", desc: "Sync failed 2 hours ago", link: "/wahana", action: "Check" },
-]
 
 const fullAlerts = [
   { label: "Mismatch Data", desc: "47 transactions don't match", link: "/reconciliation", action: "Review" },
@@ -53,41 +38,50 @@ const fullAlerts = [
 ]
 
 export default function DashboardPage() {
-  const [period, setPeriod] = useState("month")
+  const [period, setPeriod] = useState("last3months")
   const [showPeriod, setShowPeriod] = useState(false)
   const [demoMode, setDemoMode] = useState<"normal" | "empty" | "full">("normal")
+  const [trendTab, setTrendTab] = useState<"daily" | "weekly" | "monthly">("daily")
   const [lastRefresh] = useState(() => {
     const now = new Date()
     return now.toLocaleString("en-US", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })
   })
 
+  const stats = useMemo(() => getDashboardStats(period), [period])
+
+  const unitRates = stats.unitRates
+  const unitVisitors = stats.unitVisitors
+  const unitRevenue = stats.unitRevenue
+  const maxRevenue = Math.max(...Object.values(unitRevenue), 1)
+  const rates = Object.values(unitRates)
+  const totalOrders = stats.totalOrders
+  const overallMatchRate = Number((rates.reduce((a, b) => a + b, 0) / rates.length).toFixed(1))
+  const totalMismatch = stats.totalMismatch
+  const orphanPayments = stats.orphanPayments
+  const totalRevenue = stats.totalRevenue
+  const alerts = stats.alerts
+
   const displayAlerts = demoMode === "full" ? fullAlerts : demoMode === "empty" ? [] : alerts
 
+  const trendDataPoints = useMemo(() => getTrendData(trendTab, period), [trendTab, period])
+
   const trendChartOptions: ApexCharts.ApexOptions = useMemo(() => ({
-    chart: { type: "line", toolbar: { show: false } },
-    stroke: { width: [0, 2], curve: "smooth" },
+    chart: { type: "bar", toolbar: { show: false } },
+    colors: ["#3B82F6"],
     xaxis: {
-      categories: Array.from({ length: 30 }, (_, i) => `${i + 1} Jun`),
+      categories: trendDataPoints.map((p) => p.label),
     },
-    yaxis: [
-      { title: { text: "Revenue (Rp)" } },
-      { opposite: true, title: { text: "Orders" } },
-    ],
-    colors: ["#3B82F6", "#10B981"],
-  }), [])
+    yaxis: {
+      title: { text: "Orders" },
+    },
+  }), [trendDataPoints])
 
   const trendChartSeries = useMemo(() => [
     {
-      name: "Revenue",
-      type: "column",
-      data: Array.from({ length: 30 }, () => Math.floor(Math.random() * 10) + 2),
-    },
-    {
       name: "Orders",
-      type: "line",
-      data: Array.from({ length: 30 }, () => Math.floor(Math.random() * 50) + 30),
+      data: trendDataPoints.map((p) => p.orders),
     },
-  ], [])
+  ], [trendDataPoints])
 
   const donutChartOptions: ApexCharts.ApexOptions = useMemo(() => ({
     chart: { type: "donut" },
@@ -110,7 +104,9 @@ export default function DashboardPage() {
         },
       },
     },
-  }), [])
+  }), [overallMatchRate])
+
+  const matchRateTrend = useMemo(() => getMatchRateTrend(period), [period])
 
   const matchRateChartOptions: ApexCharts.ApexOptions = useMemo(() => ({
     chart: {
@@ -127,7 +123,7 @@ export default function DashboardPage() {
       strokeDashArray: 3,
     },
     xaxis: {
-      categories: Array.from({ length: 30 }, (_, i) => `${i + 1} Jun`),
+      categories: matchRateTrend.map((p) => p.label),
       axisBorder: { show: false },
       axisTicks: { show: false },
       labels: {
@@ -154,14 +150,14 @@ export default function DashboardPage() {
         opacityTo: 0.1,
       },
     },
-  }), [])
+  }), [matchRateTrend])
 
   const matchRateSeries = useMemo(() => [
     {
       name: "Match Rate",
-      data: Array.from({ length: 30 }, () => Number((Math.random() * 15 + 85).toFixed(1))),
+      data: matchRateTrend.map((p) => p.rate),
     },
-  ], [])
+  ], [matchRateTrend])
 
   const selectedPeriod = periods.find((p) => p.value === period)
 
@@ -229,51 +225,71 @@ export default function DashboardPage() {
 
       {/* KPI Stats */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-4 2xl:gap-7.5">
-        <CardDataStats title="Total Orders" total={totalOrders.toLocaleString()} rate="+2.5%" levelUp>
-          <ShoppingCart className="h-5 w-5 text-primary" />
+        <CardDataStats title="Total Orders" total={totalOrders.toLocaleString()} rate="+2.5%" levelUp bgImage="/cube-bg.jpg">
+          <ShoppingCart />
         </CardDataStats>
-        <CardDataStats title="Match Rate" total={`${overallMatchRate}%`} rate="+0.8%" levelUp>
-          <TrendingUp className="h-5 w-5 text-primary" />
+        <CardDataStats title="Match Rate" total={`${overallMatchRate}%`} rate="+0.8%" levelUp bgImage="/cube-bg_1.jpg">
+          <TrendingUp />
         </CardDataStats>
-        <CardDataStats title="Mismatch" total={String(totalMismatch)} rate="-0.5%" levelDown>
-          <AlertTriangle className="h-5 w-5 text-primary" />
+        <CardDataStats title="Mismatch" total={String(totalMismatch)} rate="-0.5%" levelDown bgImage="/cube-bg_2.jpg">
+          <AlertTriangle />
         </CardDataStats>
-        <CardDataStats title="Orphan Payments" total={String(orphanPayments)} rate="+0.1%" levelUp>
-          <ShieldAlert className="h-5 w-5 text-primary" />
+        <CardDataStats title="Orphan Payments" total={String(orphanPayments)} rate="+0.1%" levelUp bgImage="/cube-bg_3.jpg">
+          <ShieldAlert />
         </CardDataStats>
       </div>
 
       {/* WhatsApp API Status + Alert Panel */}
       <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-3">
-        {/* WhatsApp Status */}
-        <div className="rounded-lg border border-stroke bg-white px-5 pb-5 pt-7.5 shadow-default sm:px-7.5">
-          <div className="flex items-center gap-2 mb-4">
-            <MessageCircle className="h-5 w-5 text-primary" />
-            <h3 className="text-base font-semibold text-black">WhatsApp API</h3>
-            <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-xs font-medium text-success">
-              <Wifi className="h-3 w-3" />
+        <div className="relative overflow-hidden rounded-lg border border-stroke bg-white px-6 pb-6 pt-7.5 shadow-default">
+          {/* Subtle decorative glow overlay for light theme */}
+          <div className="absolute -right-16 -top-16 h-32 w-32 rounded-full bg-emerald-500/10 blur-2xl" />
+          
+          <div className="relative z-10 flex items-center gap-2 mb-6">
+            <div>
+              <h3 className="text-base font-bold text-black">WhatsApp API</h3>
+              <p className="text-xs font-bold text-emerald-600 font-mono tracking-widest uppercase">Engine Status</p>
+            </div>
+            
+            <span className="ml-auto inline-flex items-center gap-1.5 text-sm font-bold text-emerald-600">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
               Online
             </span>
           </div>
-          <div className="ml-7 divide-y divide-stroke">
-            <div className="flex items-center justify-between text-sm py-3 first:pt-0 last:pb-0">
-              <span className="text-body">Messages Sent</span>
-              <span className="font-bold text-black">1,247</span>
+
+          <div className="relative z-10 grid grid-cols-2 gap-3">
+            {/* Grid 1: Sent */}
+            <div className="rounded-lg border border-slate-100 bg-slate-50 p-3 hover:bg-slate-100 transition-all duration-300">
+              <span className="text-[11px] uppercase font-bold tracking-wider text-slate-400 block mb-1">Messages Sent</span>
+              <span className="text-2xl font-bold text-black block">1,247</span>
+              <span className="text-xs text-emerald-600 font-semibold">✓ Delivery Success</span>
             </div>
-            <div className="flex items-center justify-between text-sm py-3 first:pt-0 last:pb-0">
-              <span className="text-body">Failed Messages</span>
-              <span className="font-bold text-danger">23</span>
+
+            {/* Grid 2: Success Rate */}
+            <div className="rounded-lg border border-slate-100 bg-slate-50 p-3 hover:bg-slate-100 transition-all duration-300">
+              <span className="text-[11px] uppercase font-bold tracking-wider text-slate-400 block mb-1">Success Rate</span>
+              <span className="text-2xl font-bold text-emerald-600 block">98.2%</span>
+              <span className="text-xs text-slate-400 font-semibold block">Target &gt; 95%</span>
             </div>
-            <div className="flex items-center justify-between text-sm py-3 first:pt-0 last:pb-0">
-              <span className="text-body">Bot Response Time</span>
-              <div className="flex items-center gap-1">
-                <Clock className="h-3.5 w-3.5 text-body" />
-                <span className="font-bold text-black">1.2s</span>
+
+            {/* Grid 3: Response Time */}
+            <div className="rounded-lg border border-slate-100 bg-slate-50 p-3 hover:bg-slate-100 transition-all duration-300">
+              <span className="text-[11px] uppercase font-bold tracking-wider text-slate-400 block mb-1">Response Time</span>
+              <div className="flex items-baseline gap-1">
+                <span className="text-2xl font-bold text-black">1.2s</span>
+                <span className="text-xs text-slate-400 font-semibold">avg</span>
               </div>
+              <span className="text-xs text-emerald-600 font-semibold">⚡ Ultra Fast</span>
             </div>
-            <div className="flex items-center justify-between text-sm py-3 first:pt-0 last:pb-0">
-              <span className="text-body">Success Rate</span>
-              <span className="font-bold text-black">98.2%</span>
+
+            {/* Grid 4: Failed */}
+            <div className="rounded-lg border border-slate-100 bg-slate-50 p-3 hover:bg-slate-100 transition-all duration-300">
+              <span className="text-[11px] uppercase font-bold tracking-wider text-slate-400 block mb-1">Failed Messages</span>
+              <span className="text-2xl font-bold text-rose-600 block">23</span>
+              <span className="text-xs text-slate-400 font-semibold block">1.8% Loss Rate</span>
             </div>
           </div>
         </div>
@@ -281,37 +297,50 @@ export default function DashboardPage() {
         {/* Alert Panel */}
         <div className="xl:col-span-2 rounded-lg border border-stroke bg-white px-5 pb-5 pt-7.5 shadow-default sm:px-7.5">
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-base font-semibold text-black">Needs Action</h3>
             <div className="flex items-center gap-2">
-              <span className="text-xs text-body">Show example if data:</span>
-              <div className="flex items-center gap-1">
-              <button onClick={() => setDemoMode("normal")} className={`rounded px-2 py-1 text-xs font-medium ${demoMode === "normal" ? "bg-primary text-white" : "bg-gray-1 text-black hover:bg-gray-2"}`}>Normal</button>
-              <button onClick={() => setDemoMode("empty")} className={`rounded px-2 py-1 text-xs font-medium ${demoMode === "empty" ? "bg-primary text-white" : "bg-gray-1 text-black hover:bg-gray-2"}`}>Empty</button>
-              <button onClick={() => setDemoMode("full")} className={`rounded px-2 py-1 text-xs font-medium ${demoMode === "full" ? "bg-primary text-white" : "bg-gray-1 text-black hover:bg-gray-2"}`}>Full</button>
+              <h3 className="text-base font-bold text-black">Needs Action</h3>
+              {displayAlerts.length > 0 && (
+                <span className="text-sm text-slate-400 font-bold">
+                  ({displayAlerts.length})
+                </span>
+              )}
             </div>
+            
+            <div className="flex rounded-md border border-stroke p-0.5 bg-gray-50">
+              {(["normal", "empty", "full"] as const).map((mode) => (
+                <button
+                  key={mode}
+                  onClick={() => setDemoMode(mode)}
+                  className={`px-2.5 py-1 text-sm rounded font-semibold capitalize transition-all ${
+                    demoMode === mode ? "bg-primary text-white shadow-sm" : "text-slate-500 hover:text-primary"
+                  }`}
+                >
+                  {mode}
+                </button>
+              ))}
             </div>
           </div>
+
           {displayAlerts.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-8 text-body">
-              <div className="mb-2 rounded-full bg-success/10 p-3">
-                <CheckCircle className="h-6 w-6 text-success" />
-              </div>
-              <p className="text-sm font-medium">All Clear</p>
-              <p className="text-xs">No action needed at this time</p>
+            <div className="flex flex-col items-center justify-center py-10 text-slate-400">
+              <CheckCircle className="h-5 w-5 text-emerald-500 mb-2" />
+              <p className="text-sm font-medium text-black">All reconciled</p>
+              <p className="text-sm mt-1">No action needed at this time</p>
             </div>
           ) : (
-            <div className={`divide-y divide-stroke ${demoMode === "full" ? "max-h-80 overflow-y-auto" : ""}`}>
+            <div className={`divide-y divide-stroke ${demoMode === "full" ? "max-h-80 overflow-y-auto pr-1" : ""}`}>
               {displayAlerts.map((alert, i) => (
-                <div key={i} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
+                <div key={i} className="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0">
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-body">{alert.label}</p>
-                    <p className="text-xs text-body truncate">{alert.desc}</p>
+                    <p className="text-[15px] font-medium text-black">{alert.label}</p>
+                    <p className="text-sm text-slate-500 truncate mt-1">{alert.desc}</p>
                   </div>
                   <Link
                     href={alert.link}
-                    className="shrink-0 rounded border border-stroke px-3 py-1 text-xs font-medium text-black hover:bg-gray-1"
+                    className="group shrink-0 inline-flex items-center gap-0.5 text-sm font-semibold text-primary transition-colors hover:text-primary-dark"
                   >
-                    {alert.action}
+                    <span>{alert.action}</span>
+                    <span className="transition-transform duration-200 ease-out group-hover:translate-x-1">→</span>
                   </Link>
                 </div>
               ))}
@@ -356,12 +385,12 @@ export default function DashboardPage() {
                 <p className="text-sm font-medium text-body w-4">{i + 1}</p>
                 <p className="text-sm font-medium text-black w-40 truncate">{u.name}</p>
                 <div className="h-2 flex-grow rounded-full bg-stroke">
-                  <div className="h-full rounded-full" style={{ width: `${80 - i * 10}%`, backgroundColor: chartColors[i % chartColors.length] }} />
+                  <div className="h-full rounded-full" style={{ width: `${(unitRevenue[u.id] / maxRevenue) * 100}%`, backgroundColor: chartColors[i % chartColors.length] }} />
                 </div>
                 <p className="text-sm font-medium text-black w-32 text-right whitespace-nowrap">
-                  Rp {(unitVisitors[u.id] * 50000).toLocaleString("id-ID")}
+                  Rp {unitRevenue[u.id].toLocaleString("id-ID")}
                 </p>
-                <p className="text-sm font-bold text-black w-12 text-right">{100 - i * 5}%</p>
+                <p className="text-sm font-bold text-black w-12 text-right">{((unitRevenue[u.id] / stats.totalRevenue) * 100).toFixed(0)}%</p>
               </div>
             ))}
           </div>
@@ -372,17 +401,21 @@ export default function DashboardPage() {
       <div className="mt-6">
         <div className="rounded-lg border border-stroke bg-white px-5 pb-5 pt-7.5 shadow-default sm:px-7.5">
           <div className="flex items-center justify-between mb-5">
-            <h3 className="text-lg font-semibold text-black">Trend Revenue & Orders</h3>
+            <h3 className="text-lg font-semibold text-black">Order Trends</h3>
             <div className="flex rounded-md border border-stroke p-1">
-              {["Daily", "Weekly", "Monthly"].map((tab) => (
-                <button key={tab} className={`px-3 py-1 text-sm font-medium rounded ${tab === "Daily" ? "bg-primary text-white" : "text-body hover:text-primary"}`}>
-                  {tab}
+              {(["daily", "weekly", "monthly"] as const).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setTrendTab(tab)}
+                  className={`px-3 py-1 text-sm font-medium rounded ${trendTab === tab ? "bg-primary text-white" : "text-body hover:text-primary"}`}
+                >
+                  {tab.charAt(0).toUpperCase() + tab.slice(1)}
                 </button>
               ))}
             </div>
           </div>
           <div id="chart-revenue-orders" className="-ml-5">
-            <ReactApexChart options={trendChartOptions} series={trendChartSeries} type="line" height={350} />
+            <ReactApexChart options={trendChartOptions} series={trendChartSeries} type="bar" height={350} />
           </div>
         </div>
       </div>

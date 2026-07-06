@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef, Suspense } from "react"
+import { useState, useEffect, useRef, Suspense, useMemo } from "react"
 import { useSearchParams } from "next/navigation"
 import DefaultLayout from "@/components/layout/DefaultLayout"
 import Breadcrumb from "@/components/layout/Breadcrumb"
@@ -14,123 +14,11 @@ import FilterSortDropdown from "@/components/filters/FilterSortDropdown"
 import DateRangeFilter from "@/components/filters/DateRangeFilter"
 import PaymentStatusFilter from "@/components/filters/PaymentStatusFilter"
 import FloatingFilterBadge from "@/components/filters/FloatingFilterBadge"
-
-type OrderStatus = "PAID" | "ISSUED" | "FAILED" | "PENDING"
-
-interface OrderItem {
-  product: string
-  qty: number
-  unitPrice: number
-  total: number
-  unitId: string
-}
-
-interface Order {
-  id: string
-  customer: { name: string; phone: string; email: string }
-  orderDate: string
-  visitDate: string
-  amount: number
-  status: OrderStatus
-  payment: string
-  items: OrderItem[]
-  tickets: string[]
-}
-
-const customers = [
-  { name: "Budi Santoso", phone: "081234567890", email: "budi@email.com" },
-  { name: "Siti Rahmawati", phone: "081298765432", email: "siti@email.com" },
-  { name: "Ahmad Hidayat", phone: "087812345678", email: "ahmad@email.com" },
-  { name: "Dewi Lestari", phone: "082134567890", email: "dewi@email.com" },
-  { name: "Rudi Hartono", phone: "085612345678", email: "rudi@email.com" },
-  { name: "Nina Wijaya", phone: "081112223334", email: "nina@email.com" },
-  { name: "Hendra Gunawan", phone: "087765432109", email: "hendra@email.com" },
-  { name: "Maya Sari", phone: "082298765432", email: "maya@email.com" },
-  { name: "Agus Wijaya", phone: "081334455667", email: "agus@email.com" },
-  { name: "Rina Amelia", phone: "085598765432", email: "rina@email.com" },
-  { name: "Bayu Saputra", phone: "087711223344", email: "bayu@email.com" },
-  { name: "Fitri Handayani", phone: "082176543210", email: "fitri@email.com" },
-  { name: "Dimas Prayoga", phone: "081245678901", email: "dimas@email.com" },
-  { name: "Putri Ayu", phone: "085634567890", email: "putri@email.com" },
-  { name: "Adi Susanto", phone: "087898765432", email: "adi@email.com" },
-]
+import { getOrders, getTicketsByOrder, TODAY } from "@/lib/data"
+import type { Order, OrderStatus, OrderItem } from "@/lib/data"
 
 const statuses: OrderStatus[] = ["PAID", "ISSUED", "FAILED", "PENDING"]
-const payments = ["VA", "PG"]
-const unitProducts: Record<string, { product: string; price: number }[]> = {
-  dfn: [
-    { product: "Dufan Regular Weekday", price: 272000 },
-    { product: "Dufan Annual Pass", price: 497000 },
-    { product: "Dufan Express", price: 150000 },
-  ],
-  swa: [
-    { product: "Sea World Reguler", price: 75000 },
-    { product: "Sea World VIP", price: 200000 },
-  ],
-  ods: [
-    { product: "Samudra Reguler", price: 75000 },
-    { product: "Samudra Fast Track", price: 45000 },
-  ],
-  awa: [
-    { product: "Atlantis All Ride", price: 200000 },
-    { product: "Atlantis Periode", price: 100000 },
-    { product: "Atlantis VIP", price: 350000 },
-  ],
-  pgu: [
-    { product: "Pintu Gerahim Ancol", price: 32000 },
-    { product: "Ancol Taman Impian Pass", price: 100000 },
-  ],
-  jbl: [
-    { product: "Bird Land Reguler", price: 100000 },
-    { product: "Bird Land VIP", price: 250000 },
-  ],
-}
-
-const unitIds = Object.keys(unitProducts)
-
-function randomItem<T>(arr: T[]): T {
-  return arr[Math.floor(Math.random() * arr.length)]
-}
-
-function randomInt(min: number, max: number): number {
-  return Math.floor(Math.random() * (max - min + 1)) + min
-}
-
-function generateOrders(count: number): Order[] {
-  const orders: Order[] = []
-  for (let i = 1; i <= count; i++) {
-    const id = `ORD-${String(i).padStart(3, "0")}`
-    const customer = randomItem(customers)
-    const status = randomItem(statuses)
-    const payment = randomItem(payments)
-    const orderDay = randomInt(1, 28)
-    const visitDay = randomInt(orderDay, 30)
-    const orderDate = `2026-06-${String(orderDay).padStart(2, "0")}`
-    const visitDate = `2026-06-${String(visitDay).padStart(2, "0")}`
-
-    const unitCount = randomInt(1, 3)
-    const usedUnits = new Set<string>()
-    const items: OrderItem[] = []
-    for (let j = 0; j < unitCount; j++) {
-      let uid: string
-      do { uid = randomItem(unitIds) } while (usedUnits.has(uid))
-      usedUnits.add(uid)
-      const prod = randomItem(unitProducts[uid])
-      const qty = randomInt(1, 4)
-      items.push({ product: prod.product, qty, unitPrice: prod.price, total: prod.price * qty, unitId: uid })
-    }
-
-    const amount = items.reduce((s, it) => s + it.total, 0)
-    const ticketCount = status === "FAILED" || status === "PENDING" ? 0 : items.reduce((s, it) => s + it.qty, 0)
-    const ticketStart = (i - 1) * 5 + 1
-    const tickets = Array.from({ length: ticketCount }, (_, k) => `TIX-${String(ticketStart + k).padStart(3, "0")}`)
-
-    orders.push({ id, customer, orderDate, visitDate, amount, status, payment, items, tickets })
-  }
-  return orders
-}
-
-const orders = generateOrders(25)
+const unitIds = ["dfn", "swa", "ods", "awa", "pgu", "jbl"]
 
 const statusColor: Record<OrderStatus, string> = {
   PAID: "text-success border border-success",
@@ -138,6 +26,8 @@ const statusColor: Record<OrderStatus, string> = {
   FAILED: "text-danger border border-danger",
   PENDING: "text-warning border border-warning",
 }
+
+const orders = getOrders().data
 
 const currencyFormat = (n: number) =>
   new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(n)
@@ -183,7 +73,7 @@ function OrdersPageContent() {
   const filteredOrders = orders.filter((o) => {
     if (searchQuery) {
       const q = searchQuery.toLowerCase()
-      if (!o.id.toLowerCase().includes(q) && !o.customer.name.toLowerCase().includes(q) && !o.customer.phone.includes(q)) return false
+      if (!o.id.toLowerCase().includes(q) && !o.customerName.toLowerCase().includes(q) && !o.customerPhone.includes(q)) return false
     }
     if (unitFilter !== "all" && !o.items.some((it) => it.unitId === unitFilter)) return false
     if (statusFilter !== "all" && o.status !== statusFilter) return false
@@ -224,11 +114,11 @@ function OrdersPageContent() {
     const dir = sortKey ? sortDir : "desc"
     let aVal: string | number = "", bVal: string | number = ""
     if (key === "id") { aVal = a.id; bVal = b.id }
-    else if (key === "customer") { aVal = a.customer.name; bVal = b.customer.name }
-    else if (key === "phone") { aVal = a.customer.phone; bVal = b.customer.phone }
+    else if (key === "customer") { aVal = a.customerName; bVal = b.customerName }
+    else if (key === "phone") { aVal = a.customerPhone; bVal = b.customerPhone }
     else if (key === "amount") { aVal = a.amount; bVal = b.amount }
     else if (key === "status") { aVal = a.status; bVal = b.status }
-    else if (key === "payment") { aVal = a.payment; bVal = b.payment }
+    else if (key === "payment") { aVal = a.paymentMethod; bVal = b.paymentMethod }
     else if (key === "orderDate") { aVal = a.orderDate; bVal = b.orderDate }
     if (aVal < bVal) return dir === "asc" ? -1 : 1
     if (aVal > bVal) return dir === "asc" ? 1 : -1
@@ -245,23 +135,45 @@ function OrdersPageContent() {
     (dateFrom || dateTo ? 1 : 0) +
     (searchQuery ? 1 : 0)
 
-  const totalRevenue = filteredOrders.reduce((s, o) => s + o.amount, 0)
-  const counts = { PAID: 0, ISSUED: 0, FAILED: 0, PENDING: 0 } as Record<OrderStatus, number>
-  filteredOrders.forEach((o) => { counts[o.status]++ })
+  const thisMonthStats = useMemo(() => {
+    const startOfMonth = new Date(TODAY)
+    startOfMonth.setDate(1)
+    const startOfMonthStr = startOfMonth.toISOString().slice(0, 10)
+    
+    const thisMonthOrders = orders.filter(
+      (o) => o.orderDate >= startOfMonthStr && o.orderDate <= TODAY
+    )
+    
+    const revenue = thisMonthOrders
+      .filter((o) => o.status === "PAID" || o.status === "ISSUED")
+      .reduce((s, o) => s + o.amount, 0)
+      
+    const totalOrders = thisMonthOrders.length
+    
+    const counts = { PAID: 0, ISSUED: 0, FAILED: 0, PENDING: 0 } as Record<OrderStatus, number>
+    thisMonthOrders.forEach((o) => { counts[o.status]++ })
+    
+    return {
+      revenue,
+      totalOrders,
+      paidIssued: counts.PAID + counts.ISSUED,
+      failedPending: counts.FAILED + counts.PENDING,
+    }
+  }, [orders])
 
   function exportCSV() {
     const dateLabel = dateType === "orderDate" ? "Order Date" : "Visit Date"
     const rows = filteredOrders.map((o) => [
       o.id,
-      o.customer.name,
-      o.customer.phone,
-      o.customer.email,
+      o.customerName,
+      o.customerPhone,
+      o.customerEmail || "",
       dateType === "orderDate" ? o.orderDate : o.visitDate,
       dateType === "orderDate" ? o.visitDate : o.orderDate,
-      o.items.map((it) => `${it.product} x${it.qty}`).join("; "),
+      o.items.map((it) => `${it.unitId} ${it.ticketType} x${it.qty}`).join("; "),
       currencyFormat(o.amount),
       o.status,
-      o.payment,
+      o.paymentMethod,
     ])
     const header = ["Order ID", "Customer", "No. WA", "Email", dateLabel, dateType === "orderDate" ? "Visit Date" : "Order Date", "Items", "Amount", "Status", "Payment"]
     const csv = [header.join(","), ...rows.map((r) => r.map((c) => `"${c}"`).join(","))].join("\n")
@@ -317,13 +229,13 @@ function OrdersPageContent() {
 
   return (
     <DefaultLayout>
-      <Breadcrumb pageName="Orders" />
+      <Breadcrumb pageName="Orders This Month" />
 
       <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <StatCard label="Total Revenue" value={currencyFormat(totalRevenue)} bgImage="/cube-bg_1.jpg" />
-        <StatCard label="Total Orders" value={filteredOrders.length} bgImage="/cube-bg.jpg" />
-        <StatCard label="Paid / Issued" value={counts.PAID + counts.ISSUED} bgImage="/cube-bg_2.jpg" valueClassName="text-success" />
-        <StatCard label="Failed / Pending" value={counts.FAILED + counts.PENDING} bgImage="/cube-bg_3.jpg" valueClassName="text-danger" />
+        <StatCard label="Total Revenue" value={currencyFormat(thisMonthStats.revenue)} bgImage="/cube-bg_1.jpg" />
+        <StatCard label="Total Orders" value={thisMonthStats.totalOrders} bgImage="/cube-bg.jpg" />
+        <StatCard label="Paid / Issued" value={thisMonthStats.paidIssued} bgImage="/cube-bg_2.jpg" valueClassName="text-success" />
+        <StatCard label="Failed / Pending" value={thisMonthStats.failedPending} bgImage="/cube-bg_3.jpg" valueClassName="text-danger" />
       </div>
 
       {/* Filter Card */}
@@ -419,10 +331,10 @@ function OrdersPageContent() {
                       <span className="font-medium text-black">{order.id}</span>
                     </td>
                     <td className="border-b border-[#eee]">
-                      <span className="text-black">{order.customer.name}</span>
+                      <span className="text-black">{order.customerName}</span>
                     </td>
                     <td className="border-b border-[#eee]">
-                      <span className="text-black">{order.customer.phone}</span>
+                      <span className="text-black">{order.customerPhone}</span>
                     </td>
                     <td className="border-b border-[#eee]">
                       <div className="flex flex-wrap gap-1">
@@ -442,7 +354,7 @@ function OrdersPageContent() {
                       </span>
                     </td>
                     <td className="border-b border-[#eee]">
-                      <span className="text-black">{order.payment}</span>
+                      <span className="text-black">{order.paymentMethod}</span>
                     </td>
                     <td className="border-b border-[#eee]">
                       <span className="text-black">{order.orderDate}</span>
@@ -498,7 +410,7 @@ function OrdersPageContent() {
               <h3 className="text-lg font-semibold text-black">
                 Order Detail — {selected?.id}
               </h3>
-              <p className="text-sm text-body">Order information for {selected?.customer.name}</p>
+              <p className="text-sm text-body">Order information for {selected?.customerName}</p>
             </div>
             <div className="p-6.5">
               {selected && (
@@ -506,15 +418,15 @@ function OrdersPageContent() {
                   <div className="grid grid-cols-3 gap-4 rounded-lg bg-gray-50 p-4">
                     <div>
                       <p className="text-xs text-gray-500">Customer</p>
-                      <p className="font-medium text-black">{selected.customer.name}</p>
+                      <p className="font-medium text-black">{selected.customerName}</p>
                     </div>
                     <div>
                       <p className="text-xs text-gray-500">Phone</p>
-                      <p className="font-medium text-black">{selected.customer.phone}</p>
+                      <p className="font-medium text-black">{selected.customerPhone}</p>
                     </div>
                     <div>
                       <p className="text-xs text-gray-500">Email</p>
-                      <p className="font-medium text-black">{selected.customer.email}</p>
+                      <p className="font-medium text-black">{selected.customerEmail}</p>
                     </div>
                     <div>
                       <p className="text-xs text-gray-500">Order ID</p>
@@ -536,7 +448,7 @@ function OrdersPageContent() {
                       {selected.items.map((item, i) => (
                         <div key={i} className="flex items-center justify-between px-4 py-2.5">
                           <div className="flex items-center gap-2">
-                            <span className="text-black">{item.product}</span>
+                            <span className="text-black">{item.ticketType}</span>
                             <span className="inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-xs text-black">
                               {getUnitName(item.unitId)}
                             </span>
@@ -545,7 +457,7 @@ function OrdersPageContent() {
                           <div className="flex items-center gap-4">
                             <span className="text-gray-500">×{item.qty}</span>
                             <span className="text-gray-500">{currencyFormat(item.unitPrice)}</span>
-                            <span className="font-medium text-black">{currencyFormat(item.total)}</span>
+                            <span className="font-medium text-black">{currencyFormat(item.qty * item.unitPrice)}</span>
                           </div>
                         </div>
                       ))}
@@ -554,27 +466,33 @@ function OrdersPageContent() {
 
                   <div>
                     <h4 className="text-sm font-semibold mb-2 text-black">Ticket Codes</h4>
-                    {selected.tickets.length > 0 ? (
-                      <div className="space-y-2">
-                        {selected.items.map((item, i) => (
-                          <div key={i} className="flex items-center gap-2">
-                            <span className="inline-flex rounded-full border border-stroke px-2 py-0.5 text-xs font-medium text-black shrink-0">
-                              {getUnitName(item.unitId)}
-                            </span>
-                            <span className="text-xs text-gray-500">({item.qty} tiket)</span>
-                            <div className="flex flex-wrap gap-1">
-                              {Array.from({ length: item.qty }, (_, j) => j).map((j) => (
-                                <span key={j} className="rounded-md bg-blue-50 px-2 py-0.5 text-xs font-mono font-semibold text-blue-800">
-                                  {selected.tickets[item.qty * i + j] || `TIX-???`}
+                    {(() => {
+                      const orderTickets = getTicketsByOrder(selected.id)
+                      return orderTickets.length > 0 ? (
+                        <div className="space-y-2">
+                          {selected.items.map((item, i) => {
+                            const itemTickets = orderTickets.filter((t) => t.unitId === item.unitId && t.ticketType === item.ticketType)
+                            return itemTickets.length > 0 && (
+                              <div key={i} className="flex items-center gap-2">
+                                <span className="inline-flex rounded-full border border-stroke px-2 py-0.5 text-xs font-medium text-black shrink-0">
+                                  {getUnitName(item.unitId)}
                                 </span>
-                              ))}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-sm text-gray-500">No tickets yet</p>
-                    )}
+                                <span className="text-xs text-gray-500">({itemTickets.length} tiket)</span>
+                                <div className="flex flex-wrap gap-1">
+                                  {itemTickets.map((t) => (
+                                    <span key={t.id} className="rounded-md bg-blue-50 px-2 py-0.5 text-xs font-mono font-semibold text-blue-800">
+                                      {t.id}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-gray-500">No tickets yet</p>
+                      )
+                    })()}
                   </div>
 
                   <div className="divide-y divide-gray-300 rounded-lg border border-stroke text-sm">
@@ -591,7 +509,7 @@ function OrdersPageContent() {
                     <div className="flex items-center justify-between px-4 py-2.5">
                       <div className="flex items-center gap-2">
                         <span className="text-gray-500">Payment Method</span>
-                        <span className="font-medium text-black">{selected.payment}</span>
+                        <span className="font-medium text-black">{selected.paymentMethod}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-gray-500">Payment Status</span>

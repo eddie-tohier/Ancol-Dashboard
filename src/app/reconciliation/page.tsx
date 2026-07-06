@@ -1,72 +1,18 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
+import { useSearchParams, useRouter } from "next/navigation"
 import DefaultLayout from "@/components/layout/DefaultLayout"
 import Breadcrumb from "@/components/layout/Breadcrumb"
 import Link from "next/link"
 import { Calendar, ChevronLeft, ChevronRight, RefreshCw, Eye } from "lucide-react"
-import { UNITS } from "@/lib/units"
+import { getSessions } from "@/lib/data/reconciliation"
+import type { ReconciliationSession } from "@/lib/data/reconciliation"
+import { TODAY } from "@/lib/data/constants"
 
-interface Session {
-  id: string
-  date: string
-  time: string
-  duration: string
-  totalOrders: number
-  matchRate: number
-  status: "COMPLETED" | "RUNNING" | "FAILED"
-  unitId: string
-}
+const allSessions = getSessions()
 
 function pad(n: number) { return String(n).padStart(2, "0") }
-
-function generateSessions(): Session[] {
-  const unitIds = UNITS.map((u) => u.id)
-  const sessions: Session[] = []
-  let idx = 1
-  const days = [
-    { date: "2026-07-01", hours: 24 },
-    { date: "2026-07-02", hours: 24 },
-    { date: "2026-07-03", hours: 10 },
-  ]
-
-  for (const day of days) {
-    for (let h = 0; h < day.hours; h++) {
-      const hour = pad(h)
-      const time = `${hour}:${Math.random() > 0.5 ? "00" : "30"}:00`
-      const durationSec = Math.floor(Math.random() * 900) + 120
-      const min = Math.floor(durationSec / 60)
-      const sec = durationSec % 60
-      const duration = `${min}m ${pad(sec)}s`
-      const totalOrders = Math.floor(Math.random() * 200) + 20
-      const matchRate = Number((Math.random() * 20 + 80).toFixed(1))
-
-      const isToday = day.date === "2026-07-03"
-      const isRunning = isToday && h >= 9
-      const isFailed = !isRunning && Math.random() < 0.04
-      let status: "COMPLETED" | "RUNNING" | "FAILED"
-      if (isRunning) status = "RUNNING"
-      else if (isFailed) status = "FAILED"
-      else status = "COMPLETED"
-
-      sessions.push({
-        id: `SES-${pad(idx)}`,
-        date: day.date,
-        time,
-        duration: status === "RUNNING" || status === "FAILED" ? "--" : duration,
-        totalOrders: status === "RUNNING" || status === "FAILED" ? 0 : totalOrders,
-        matchRate: status === "RUNNING" || status === "FAILED" ? 0 : matchRate,
-        status,
-        unitId: unitIds[Math.floor(Math.random() * unitIds.length)],
-      })
-      idx++
-    }
-  }
-  return sessions
-}
-
-const allSessions = generateSessions()
-const todayDate = "2026-07-03"
 
 function formatDate(dateStr: string) {
   const [y, m, d] = dateStr.split("-").map(Number)
@@ -95,11 +41,34 @@ function MatchRateBadge({ rate }: { rate: number }) {
 }
 
 export default function ReconciliationPage() {
-  const [dateFilter, setDateFilter] = useState(todayDate)
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  
+  // Use query param for date, default to TODAY
+  const dateFilter = searchParams.get("date") || TODAY
+  
   const [calendarOpen, setCalendarOpen] = useState(false)
-  const [calMonth, setCalMonth] = useState(7)
-  const [calYear, setCalYear] = useState(2026)
+  
+  // Parse initial month/year from dateFilter for calendar view
+  const [y, m] = dateFilter.split("-").map(Number)
+  const [calMonth, setCalMonth] = useState(m)
+  const [calYear, setCalYear] = useState(y)
   const calendarRef = useRef<HTMLDivElement>(null)
+
+  // Sync calendar view month/year when dateFilter changes
+  useEffect(() => {
+    const [y, m] = dateFilter.split("-").map(Number)
+    if (!isNaN(y) && !isNaN(m)) {
+      setCalMonth(m)
+      setCalYear(y)
+    }
+  }, [dateFilter])
+
+  const setDateFilter = (newDate: string) => {
+    const params = new URLSearchParams(searchParams.toString())
+    params.set("date", newDate)
+    router.replace(`/reconciliation?${params.toString()}`, { scroll: false })
+  }
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -261,7 +230,13 @@ export default function ReconciliationPage() {
                   </td>
                   <td className="border-b border-[#eee]">
                     <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
-                      session.status === "COMPLETED" ? "text-success border border-success" : session.status === "FAILED" ? "text-danger border border-danger" : "text-primary border border-primary"
+                      session.status === "COMPLETED"
+                        ? "text-success border border-success"
+                        : session.status === "FAILED"
+                          ? "text-danger border border-danger"
+                          : session.status === "NO_ORDERS"
+                            ? "text-gray-500 border border-gray-300"
+                            : "text-primary border border-primary"
                     }`}>
                       {session.status}
                     </span>
@@ -275,7 +250,7 @@ export default function ReconciliationPage() {
                         <RefreshCw className="h-4 w-4 text-warning" />
                       </button>
                     ) : (
-                      <Link href={`/reconciliation/${session.id}`}>
+                      <Link href={`/reconciliation/${session.id}?date=${dateFilter}`}>
                         <button className="inline-flex items-center justify-center rounded border border-stroke px-3 py-1.5 text-sm font-medium hover:bg-gray-1">
                           <Eye className="h-4 w-4" />
                         </button>
